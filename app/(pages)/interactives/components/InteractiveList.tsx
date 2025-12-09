@@ -84,9 +84,9 @@ const InteractiveList = () => {
       },
     ],
     DESIGN: [
-      { id: 5, src: design, title: "DESIGN", path: "design_image_composer" },
+      { id: 6, src: design, title: "DESIGN", path: "design_image_composer" },
       {
-        id: 6,
+        id: 7,
         src: design2,
         title: "IMAGE + SHAPE",
         path: "design_image_glow",
@@ -94,10 +94,10 @@ const InteractiveList = () => {
     ],
     NATURE: [
       {
-        id: 2,
+        id: 8,
         src: nature,
         title: "Nature Abstract Sketch",
-        path: "chaotic_particles",
+        path: "generative_nature",
       },
     ],
     EXPERIMENTAL: [
@@ -109,8 +109,7 @@ const InteractiveList = () => {
       },
     ],
     DYNAMIC: [
-      { id: 6, src: dynamic, title: "FAN SKETCH", path: "fan-sketch" },
-      { id: 7, src: dynamic2, title: "PAD SKETCH", path: "pad" },
+      { id: 7, src: dynamic, title: "PAD SKETCH", path: "pad" },
     ],
   };
 

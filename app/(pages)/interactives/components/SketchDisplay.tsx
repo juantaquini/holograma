@@ -17,6 +17,9 @@ const registry: Record<string, () => Promise<any>> = {
   "design_image_glow": () => import("./sketches/design/CanvasImageGlow"),
   "chaotic_mouse_trail": () => import("./sketches/chaotic/MouseTrailImage"),
   "chaotic_wave_field": () => import("./sketches/chaotic/ChaoticWaveField"),
+  "generative_nature": () => import("./sketches/nature/GenerativeNature"),
+  "rolling_interactive_spiral": () => import("./sketches/experimental/RollingInteractiveSpiral"),
+  "pad": () => import("./sketches/dynamic/Pad"),
 };
 
 export default function SketchDisplay({ slug }: SketchDisplayProps) {
