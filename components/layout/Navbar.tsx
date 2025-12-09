@@ -15,7 +15,7 @@ export default function Navbar() {
   const { theme, changeTheme } = useColorTheme();
   const pathname = usePathname();
 
-  const isFluid = pathname?.includes("fluid");
+  const isCalm = pathname?.includes("calm");
 
   const cycleTheme = () => {
     const next =
@@ -48,7 +48,7 @@ export default function Navbar() {
         <div className={styles["navbar-mobile-row"]}>
           <Link
             className={`${styles["navbar-logo-mobile"]} ${
-              isFluid ? styles["fluid-mode"] : ""
+              isCalm ? styles["calm-mode"] : ""
             }`}
             href="/"
           >
@@ -57,7 +57,7 @@ export default function Navbar() {
 
           <button
             className={`${styles["navbar-hamburger"]} ${
-              isFluid ? styles["fluid-mode"] : ""
+              isCalm ? styles["calm-mode"] : ""
             }`}
             onClick={() => setMobileMenuOpen((open) => !open)}
             aria-label="Open menu"
@@ -70,12 +70,12 @@ export default function Navbar() {
       {!isMobileView && (
         <nav
           className={`${styles["navbar-horizontal-links"]} ${
-            isFluid ? styles["fluid-mode"] : ""
+            isCalm ? styles["calm-mode"] : ""
           }`}
         >
           <Link
             className={`${styles["navbar-logo-text"]} ${
-              isFluid ? styles["fluid-mode"] : ""
+              isCalm ? styles["calm-mode"] : ""
             }`}
             href="/"
           >
@@ -84,7 +84,7 @@ export default function Navbar() {
 
           <div
             className={`${styles["navbar-links"]} ${
-              isFluid ? styles["fluid-mode"] : ""
+              isCalm ? styles["calm-mode"] : ""
             }`}
           >
             <Link href="/explore">EXPLORE</Link>
@@ -99,7 +99,7 @@ export default function Navbar() {
       {isMobileView && mobileMenuOpen && (
         <div
           className={`${styles["navbar-mobile-menu"]} ${
-            isFluid ? styles["fluid-mode"] : ""
+            isCalm ? styles["calm-mode"] : ""
           }`}
         >
           <div className={styles["navbar-mobile-header"]}></div>

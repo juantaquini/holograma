@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "app/(pages)/interactives/components/sketches/design/image-print/main-files/PrintImages.tsx"  ],
   "exclude": ["node_modules"]
 }

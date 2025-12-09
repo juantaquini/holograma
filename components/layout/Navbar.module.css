@@ -152,36 +152,36 @@
   letter-spacing: 0.04em;
 }
 
-/* Fluid mode styles */
-.navbar-logo-mobile.fluid-mode {
+/* calm mode styles */
+.navbar-logo-mobile.calm-mode {
   color: #ff0000 !important;
 }
 
-.navbar-horizontal-links.fluid-mode .navbar-logo-text,
-.navbar-logo-text.fluid-mode {
+.navbar-horizontal-links.calm-mode .navbar-logo-text,
+.navbar-logo-text.calm-mode {
   color: #ff0000 !important;
 }
 
-.navbar-links.fluid-mode a,
-.navbar-links.fluid-mode button,
-.navbar-horizontal-links.fluid-mode .navbar-links a,
-.navbar-horizontal-links.fluid-mode .navbar-links button {
+.navbar-links.calm-mode a,
+.navbar-links.calm-mode button,
+.navbar-horizontal-links.calm-mode .navbar-links a,
+.navbar-horizontal-links.calm-mode .navbar-links button {
   color: #ff0000 !important;
 }
 
-.navbar-hamburger.fluid-mode {
+.navbar-hamburger.calm-mode {
   color: #ff0000 !important;
 }
 
-.navbar-mobile-menu.fluid-mode a,
-.navbar-mobile-menu.fluid-mode button {
+.navbar-mobile-menu.calm-mode a,
+.navbar-mobile-menu.calm-mode button {
   color: #ff0000 !important;
 }
 
-.navbar-links.fluid-mode a:hover,
-.navbar-links.fluid-mode button:hover,
-.navbar-horizontal-links.fluid-mode .navbar-links a:hover,
-.navbar-horizontal-links.fluid-mode .navbar-links button:hover {
+.navbar-links.calm-mode a:hover,
+.navbar-links.calm-mode button:hover,
+.navbar-horizontal-links.calm-mode .navbar-links a:hover,
+.navbar-horizontal-links.calm-mode .navbar-links button:hover {
   color: #ff0000 !important;
   text-decoration: underline;
   text-decoration-style: dashed;
