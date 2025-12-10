@@ -39,7 +39,7 @@ const MouseTrailImage: React.FC = () => {
 
     // Partículas iniciales
     const initial: any[] = [];
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 50; i++) {
       initial.push(new Particle(p5, p5.random(p5.width), p5.random(p5.height), img));
     }
     setParticles(initial);
