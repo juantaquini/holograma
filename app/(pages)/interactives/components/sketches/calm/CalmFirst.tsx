@@ -7,7 +7,6 @@ import styles from "./Calm.module.css";
 
 const Sketch = dynamic(() => import("react-p5"), {
   ssr: false,
-  loading: () => <div style={{ width: "100%", height: "100vh", background: "#000" }} />,
 });
 
 interface Particle {

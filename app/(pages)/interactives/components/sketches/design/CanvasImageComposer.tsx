@@ -7,7 +7,6 @@ import { SVGs } from "@/public/assets/SVGs";
 
 const Sketch = dynamic(() => import("react-p5"), {
   ssr: false,
-  loading: () => <div style={{ width: "100%", height: "100%" }} />,
 });
 
 let p5Instance: any = null;

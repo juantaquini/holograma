@@ -7,7 +7,6 @@ import particleImage from "@/public/assets/interactives/design/stars.png";
 // Carga react-p5 sin SSR
 const Sketch = dynamic(() => import("react-p5"), {
   ssr: false,
-  loading: () => <div style={{ width: "100%", height: "100%" }} />,
 });
 
 const MouseTrailImage: React.FC = () => {

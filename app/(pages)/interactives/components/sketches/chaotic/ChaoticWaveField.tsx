@@ -2,15 +2,11 @@
 
 import dynamic from "next/dynamic";
 import React, { useRef } from "react";
-import LoadingSketch from "../../../../../../components/p5/loading/LoadingSketch";
 
 
 
 const Sketch = dynamic(() => import("react-p5"), {
   ssr: false,
-  loading: () => (
-    <LoadingSketch/>
-  ),
 });
 
 export default function BlueStormMountains() {

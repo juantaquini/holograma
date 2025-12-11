@@ -10,7 +10,6 @@ import { colorPalettes } from "@/lib/color-palettes";
 
 const Sketch = dynamic(() => import("react-p5"), {
   ssr: false,
-  loading: () => <div style={{ width: "100%", height: "100%" }} />,
 });
 
 interface Aureola {
