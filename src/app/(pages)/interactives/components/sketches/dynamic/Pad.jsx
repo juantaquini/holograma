@@ -1,8 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import suziImg from "../../../../../../public/assets/interactives/pad/suzi.jpg";
-import harmImg from "../../../../../../public/assets/interactives/pad/harm.jpg";
-import goylImg from "../../../../../../public/assets/interactives/pad/goyl.jpg";
+import suziImg from "@/assets/interactives/pad/suzi.jpg";
+import harmImg from "@/assets/interactives/pad/harm.jpg";
+import goylImg from "@/assets/interactives/pad/goyl.jpg";
 
 const mediaPath = (name) => `/assets/interactives/pad/${name}`;
 

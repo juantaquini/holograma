@@ -3,21 +3,22 @@ import localFont from "next/font/local";
 import { IBM_Plex_Sans } from "next/font/google";
 import Navbar from "@/components/layout/Navbar";
 import ColorThemeProvider from "@/app/(providers)/color-theme-provider";
+import { AuthContextProvider } from "./(providers)/auth-provider";
 
 const array = localFont({
   src: [
     {
-      path: "./../public/fonts/array/Array-Regular.woff2",
+      path: "../fonts/array/Array-Regular.woff2",
       weight: "400",
       style: "normal",
     },
     {
-      path: "./../public/fonts/array/Array-Semibold.woff2",
+      path: "../fonts/array/Array-Semibold.woff2",
       weight: "600",
       style: "normal",
     },
     {
-      path: "./../public/fonts/array/Array-BoldWide.woff2",
+      path: "../fonts/array/Array-BoldWide.woff2",
       weight: "700",
       style: "normal",
     },
@@ -45,10 +46,12 @@ export default function RootLayout({
     <html lang="es" className={`${array.variable} ${plex.variable}`}>
       <body>
         <div className="app-content">
-          <ColorThemeProvider>
-            <Navbar />
-            {children}
-          </ColorThemeProvider>
+          <AuthContextProvider>
+            <ColorThemeProvider>
+              <Navbar />
+              {children}
+            </ColorThemeProvider>
+          </AuthContextProvider>
         </div>
       </body>
     </html>

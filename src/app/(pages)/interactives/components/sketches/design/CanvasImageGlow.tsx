@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import styles from "./CanvasImageGlow.module.css";
 import { TbArrowDownRightCircle, TbTopologyStarRing } from "react-icons/tb";
-import { SVGs } from "@/public/assets/SVGs";
+import { SVGs } from "@/assets/SVGs";
 import { useColorTheme } from "@/app/(providers)/color-theme-provider";
 import { colorPalettes } from "@/lib/color-palettes";
 

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import dynamic from "next/dynamic";
-import particleImage from "@/public/assets/interactives/design/stars.png";
+import particleImage from "@/assets/interactives/design/stars.png";
 
 // Carga react-p5 sin SSR
 const Sketch = dynamic(() => import("react-p5"), {

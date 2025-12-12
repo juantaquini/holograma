@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import styles from "./CanvasImageComposer.module.css";
-import { SVGs } from "@/public/assets/SVGs";
+import { SVGs } from "@/assets/SVGs";
 
 const Sketch = dynamic(() => import("react-p5"), {
   ssr: false,

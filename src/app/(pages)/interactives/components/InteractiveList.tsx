@@ -4,17 +4,17 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./InteractiveList.module.css";
-import calm from "@/public/assets/interactives/calm.jpeg";
-import calm2 from "@/public/assets/interactives/calm2.jpeg";
-import chaotic from "@/public/assets/interactives/chaotic.jpeg";
-import chaotic2 from "@/public/assets/interactives/chaotic2.png";
-import design from "@/public/assets/interactives/design.jpeg";
-import design2 from "@/public/assets/interactives/design2.jpeg";
-import dynamic from "@/public/assets/interactives/dynamic.jpeg";
-import dynamic2 from "@/public/assets/interactives/dynamic2.jpeg";
-import experimental from "@/public/assets/interactives/experimental.jpeg";
-import nature from "@/public/assets/interactives/nature.png";
-import psychedelic from "@/public/assets/interactives/psychedelic.jpeg";
+import calm from "@/assets/interactives/calm.jpeg";
+import calm2 from "@/assets/interactives/calm2.jpeg";
+import chaotic from "@/assets/interactives/chaotic.jpeg";
+import chaotic2 from "@/assets/interactives/chaotic2.png";
+import design from "@/assets/interactives/design.jpeg";
+import design2 from "@/assets/interactives/design2.jpeg";
+import dynamic from "@/assets/interactives/dynamic.jpeg";
+import dynamic2 from "@/assets/interactives/dynamic2.jpeg";
+import experimental from "@/assets/interactives/experimental.jpeg";
+import nature from "@/assets/interactives/nature.png";
+import psychedelic from "@/assets/interactives/psychedelic.jpeg";
 
 const InteractiveList = () => {
   const [hoveredDescription, setHoveredDescription] = useState(
