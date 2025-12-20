@@ -4,6 +4,11 @@ import React, { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import styles from "./CanvasImageComposer.module.css";
 import { SVGs } from "@/assets/SVGs";
+import horsePng from "@/assets/interactives/design/horse.png";
+import wwwwPng from "@/assets/interactives/design/wwwww.png";
+import feelPng from "@/assets/interactives/design/feel.png";
+import starsPng from "@/assets/interactives/design/stars.png";
+import dolphinesPng from "@/assets/interactives/design/dolphines.png";
 
 const Sketch = dynamic(() => import("react-p5"), {
   ssr: false,
@@ -271,11 +276,11 @@ const openFullscreenHelper = () => {
   }
 };
 
-const horseImage = "/assets/interactives/design/horse.png";
-const image2 = "/assets/interactives/design/wwwww.png";
-const image3 = "/assets/interactives/design/feel.png";
-const image4 = "/assets/interactives/design/stars.png";
-const image5 = "/assets/interactives/design/dolphines.png";
+const horseImage = horsePng.src;
+const image2 = wwwwPng.src;
+const image3 = feelPng.src;
+const image4 = starsPng.src;
+const image5 = dolphinesPng.src;
 
 
 const CanvasImageComposer: React.FC = () => {

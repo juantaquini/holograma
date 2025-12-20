@@ -4,6 +4,8 @@ import { IBM_Plex_Sans } from "next/font/google";
 import Navbar from "@/components/layout/Navbar";
 import ColorThemeProvider from "@/app/(providers)/color-theme-provider";
 import { AuthContextProvider } from "./(providers)/auth-provider";
+import { PopupProvider } from "./(providers)/popup-provider";
+import ReactQueryProvider from "./(providers)/react-query-provider";
 
 const array = localFont({
   src: [
@@ -48,8 +50,10 @@ export default function RootLayout({
         <div className="app-content">
           <AuthContextProvider>
             <ColorThemeProvider>
-              <Navbar />
-              {children}
+              <PopupProvider>
+                <Navbar />
+                <ReactQueryProvider>{children}</ReactQueryProvider>{" "}
+              </PopupProvider>
             </ColorThemeProvider>
           </AuthContextProvider>
         </div>

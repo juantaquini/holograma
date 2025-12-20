@@ -8,5 +8,7 @@ if (!API) {
 
 export const apiClient = axios.create({
   baseURL: API,
-  withCredentials: true, // si tu backend usa cookies
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
