@@ -99,7 +99,7 @@ export default function Navbar() {
           <div className={styles["navbar-links"]}>
             <Link href="/explore">EXPLORE</Link>
             <Link href="/interactives">INTERACTIVES</Link>
-            <Link href="/magazine">MAGAZINE</Link>
+            <Link href="/articles">ARTICLES</Link>
             <button onClick={cycleTheme}>CHANGE SKIN</button>
 
             {!user ? (
@@ -120,8 +120,8 @@ export default function Navbar() {
             <Link href="/interactives" onClick={handleMobileLinkClick}>
               INTERACTIVES
             </Link>
-            <Link href="/magazine" onClick={handleMobileLinkClick}>
-              MAGAZINE
+            <Link href="/articles" onClick={handleMobileLinkClick}>
+              ARTICLES
             </Link>
 
             <button

@@ -8,19 +8,13 @@ import { useAuth } from "@/app/(providers)/auth-provider";
 import { useForm } from "react-hook-form";
 import { VscDiffAdded } from "react-icons/vsc";
 import { RiDeleteBin6Line } from "react-icons/ri";
-import { MdDragIndicator } from "react-icons/md";
 import { FaPause, FaPlay } from "react-icons/fa6";
-import { DndProvider, useDrag, useDrop } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
 import WaveSurfer from "wavesurfer.js";
-import Image from "next/image";
 import CustomTextInput from "@/components/inputs/CustomTextInput";
 import LoadingSketch from "@/components/p5/loading/LoadingSketch";
+import ImageCarousel from "../components/ImageCarousel";
+import DynamicPad from "../components/DynamicPad";
 import styles from "./ArticleDetail.module.css";
-
-const ItemTypes = {
-  IMAGE: "image",
-};
 
 interface UserData {
   role: string;
@@ -53,96 +47,6 @@ interface VideoPreview {
   name: string;
   loaded: boolean;
 }
-
-interface DraggableImageProps {
-  image: string;
-  index: number;
-  moveImage: (dragIndex: number, hoverIndex: number) => void;
-  handleDeleteExistingImage: (index: number) => void;
-  isEditing: boolean;
-  handleImageClick: (e: React.MouseEvent<HTMLImageElement>) => void;
-  isDnDEnabled: boolean;
-}
-
-const DraggableImage = ({
-  image,
-  index,
-  moveImage,
-  handleDeleteExistingImage,
-  isEditing,
-  handleImageClick,
-  isDnDEnabled,
-}: DraggableImageProps) => {
-  const ref = useRef<HTMLDivElement>(null);
-
-  const [{ isDragging }, drag] = useDrag({
-    type: ItemTypes.IMAGE,
-    item: { index },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-    canDrag: isDnDEnabled,
-  });
-
-  const [, drop] = useDrop({
-    accept: ItemTypes.IMAGE,
-    hover: (item: { index: number }, monitor) => {
-      if (!ref.current || !isDnDEnabled) return;
-
-      const dragIndex = item.index;
-      const hoverIndex = index;
-      if (dragIndex === hoverIndex) return;
-
-      const hoverBoundingRect = ref.current.getBoundingClientRect();
-      const hoverMiddleX =
-        (hoverBoundingRect.right - hoverBoundingRect.left) / 2;
-      const clientOffset = monitor.getClientOffset();
-      if (!clientOffset) return;
-      const hoverClientX = clientOffset.x - hoverBoundingRect.left;
-
-      if (dragIndex < hoverIndex && hoverClientX < hoverMiddleX) return;
-      if (dragIndex > hoverIndex && hoverClientX > hoverMiddleX) return;
-
-      moveImage(dragIndex, hoverIndex);
-      item.index = hoverIndex;
-    },
-  });
-
-  if (isDnDEnabled) {
-    drag(drop(ref));
-  }
-
-  return (
-    <div
-      ref={ref}
-      className={`${styles["article-detail-image-carrousell"]} ${isDragging ? styles["dragging"] : ""}`}
-      style={{ opacity: isDragging ? 0.4 : 1 }}
-    >
-      {isEditing && isDnDEnabled && (
-        <div className={styles["drag-handle"]}>
-          <MdDragIndicator />
-        </div>
-      )}
-      <Image
-        src={image}
-        alt={`Media ${index}`}
-        width={800}
-        height={600}
-        className={`${styles["article-detail-image-carrousell-photo"]} ${isEditing ? styles["editing"] : ""}`}
-        onClick={isEditing ? undefined : handleImageClick}
-      />
-      {isEditing && (
-        <button
-          className={styles["delete-image-button"]}
-          onClick={() => handleDeleteExistingImage(index)}
-          type="button"
-        >
-          <RiDeleteBin6Line />
-        </button>
-      )}
-    </div>
-  );
-};
 
 interface WavesurferPreviewProps {
   src: string;
@@ -179,10 +83,17 @@ const WavesurferPreview = ({ src }: WavesurferPreviewProps) => {
 
     wsRef.current.on("ready", () => setIsReady(true));
     wsRef.current.on("finish", () => setIsPlaying(false));
+    wsRef.current.on("error", () => {});
 
     return () => {
       try {
-        wsRef.current && wsRef.current.destroy();
+        if (wsRef.current) {
+          try { wsRef.current.unAll(); } catch {}
+          try { wsRef.current.pause(); } catch {}
+          if (isReady) {
+            try { wsRef.current.destroy(); } catch {}
+          }
+        }
       } catch {}
       wsRef.current = null;
     };
@@ -290,7 +201,26 @@ const ArticleDetail = ({ params }: ArticleDetailProps) => {
     files.forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPreviewImages((prev) => [...prev, reader.result as string]);
+        const dataUrl = reader.result as string;
+        setPreviewImages((prev) => [...prev, dataUrl]);
+        uploadImageFile(file)
+          .then(() => {
+            setPreviewImages((prev) => {
+              const idx = prev.indexOf(dataUrl);
+              if (idx === -1) return prev;
+              const next = [...prev];
+              next.splice(idx, 1);
+              setSelectedFiles((prevFiles) => {
+                const filesNext = [...prevFiles];
+                if (idx >= 0) filesNext.splice(idx, 1);
+                return filesNext;
+              });
+              return next;
+            });
+          })
+          .catch((err) => {
+            console.error('Image upload failed:', err);
+          });
       };
       reader.readAsDataURL(file);
     });
@@ -322,6 +252,53 @@ const ArticleDetail = ({ params }: ArticleDetailProps) => {
       const imageToDelete = orderedImages[index];
       setImagesToDelete((prev) => [...prev, imageToDelete]);
       setOrderedImages((prev) => prev.filter((img) => img !== imageToDelete));
+    }
+  };
+
+  const handleReorderImages = (newOrder: string[]) => {
+    setOrderedImages(newOrder);
+  };
+
+  const handleDeletePreviewImage = (index: number) => {
+    setPreviewImages((prev) => prev.filter((_, i) => i !== index));
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleReorderPreviewImages = (newOrder: string[]) => {
+    setPreviewImages(newOrder);
+    setSelectedFiles((prevFiles) => {
+      const map: Record<number, number> = {};
+      newOrder.forEach((img, newIdx) => {
+        const oldIdx = (previewImages as string[]).indexOf(img);
+        if (oldIdx !== -1) map[oldIdx] = newIdx;
+      });
+      const reordered: File[] = [];
+      prevFiles.forEach((file, oldIdx) => {
+        const newIdx = map[oldIdx];
+        if (typeof newIdx === 'number') {
+          reordered[newIdx] = file;
+        }
+      });
+      return reordered.filter(Boolean) as File[];
+    });
+  };
+
+  const uploadImageFile = async (file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    const resp = await post(`/articles/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    const url =
+      typeof resp === 'string'
+        ? resp
+        : (resp?.url || resp?.imageUrl || resp?.path || resp?.data?.url || resp?.data?.imageUrl || resp?.data?.path);
+    if (url) {
+      setOrderedImages((prev) => [...prev, url]);
+    } else {
+      try {
+        await articleRefetch();
+      } catch {}
     }
   };
 
@@ -393,20 +370,12 @@ const ArticleDetail = ({ params }: ArticleDetailProps) => {
     }
   };
 
-  const moveImage = (dragIndex: number, hoverIndex: number) => {
-    const draggedImage = orderedImages[dragIndex];
-    const newOrderedImages = [...orderedImages];
-    newOrderedImages.splice(dragIndex, 1);
-    newOrderedImages.splice(hoverIndex, 0, draggedImage);
-    setOrderedImages(newOrderedImages);
-  };
-
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const files = Array.from(e.dataTransfer.files);
-      if (files.some((file) => !file.type.startsWith("image/"))) {
-        alert("Por favor, solo arrastre archivos de imagen");
+      if (files.some((file) => !file.type.startsWith('image/'))) {
+        alert('Por favor, solo arrastre archivos de imagen');
         return;
       }
       setSelectedFiles((prevFiles) => [...prevFiles, ...files]);
@@ -414,24 +383,45 @@ const ArticleDetail = ({ params }: ArticleDetailProps) => {
       files.forEach((file) => {
         const reader = new FileReader();
         reader.onloadend = () => {
-          setPreviewImages((prev) => [...prev, reader.result as string]);
+          const dataUrl = reader.result as string;
+          setPreviewImages((prev) => [...prev, dataUrl]);
+          uploadImageFile(file)
+            .then(() => {
+              setPreviewImages((prev) => {
+                const idx = prev.indexOf(dataUrl);
+                if (idx === -1) return prev;
+                const next = [...prev];
+                next.splice(idx, 1);
+                setSelectedFiles((prevFiles) => {
+                  const filesNext = [...prevFiles];
+                  if (idx >= 0) filesNext.splice(idx, 1);
+                  return filesNext;
+                });
+                return next;
+              });
+            })
+            .catch((err) => {
+              console.error('Image upload failed:', err);
+            });
         };
         reader.readAsDataURL(file);
       });
     }
-
-    e.currentTarget.classList.remove(styles["drag-over"]);
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    e.currentTarget.classList.add(styles["drag-over"]);
-  };
+  const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
+    if (isEditing) return;
 
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.currentTarget.classList.remove(styles["drag-over"]);
+    const image = e.currentTarget;
+    const rect = image.getBoundingClientRect();
+
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    image.style.setProperty("--x", x + "%");
+    image.style.setProperty("--y", y + "%");
+
+    image.classList.toggle(styles["zoomed"]);
   };
 
   const onSubmit = async (data: FormDataType) => {
@@ -497,21 +487,6 @@ const ArticleDetail = ({ params }: ArticleDetailProps) => {
     }
   };
 
-  const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
-    if (isEditing) return;
-
-    const image = e.currentTarget;
-    const rect = image.getBoundingClientRect();
-
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-    image.style.setProperty("--x", x + "%");
-    image.style.setProperty("--y", y + "%");
-
-    image.classList.toggle(styles["zoomed"]);
-  };
-
   if (isLoading) {
     return <LoadingSketch />;
   }
@@ -522,66 +497,20 @@ const ArticleDetail = ({ params }: ArticleDetailProps) => {
 
   return (
     <div className={styles["article-detail-main-container"]}>
-      <div
-        style={isLoading ? { overflow: "hidden" } : undefined}
-        className={styles["article-detail-media-container"]}
-      >
-        {!isLoading && (
-          <DndProvider backend={HTML5Backend}>
-            <div className={styles["scroll-slider"]}>
-              {orderedImages.map((image, index) => (
-                <DraggableImage
-                  key={index}
-                  image={image}
-                  index={index}
-                  moveImage={moveImage}
-                  handleDeleteExistingImage={handleDeleteExistingImage}
-                  isEditing={isEditing}
-                  handleImageClick={handleImageClick}
-                  isDnDEnabled={!!user}
-                />
-              ))}
+      {/* NUEVO CAROUSEL COMPONENT */}
+      <ImageCarousel
+          images={orderedImages}
+          previewImages={previewImages}
+          isEditing={isEditing}
+          isAdmin={isAdmin}
+          onReorder={handleReorderImages}
+          onDeleteExisting={handleDeleteExistingImage}
+          onFileChange={handleFileChange}
+          onDrop={handleDrop}
+          previewOnReorder={handleReorderPreviewImages}
+          onDeletePreview={handleDeletePreviewImage}
+        />
 
-              {previewImages.map((preview, index) => (
-                <div
-                  className={styles["article-detail-image-carrousell"]}
-                  key={`preview-${index}`}
-                >
-                  <Image
-                    src={preview}
-                    alt={`Preview ${index}`}
-                    width={800}
-                    height={600}
-                    className={styles["article-detail-image-carrousell-photo"]}
-                  />
-                </div>
-              ))}
-              {isAdmin && isEditing && (
-                <div
-                  className={`${styles["article-detail-image-carrousell"]} ${styles["upload-container"]}`}
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                >
-                  <label htmlFor="image-upload" className={styles["upload-label"]}>
-                    <div className={styles["upload-icon"]}>
-                      <VscDiffAdded />
-                    </div>
-                    <input
-                      id="image-upload"
-                      type="file"
-                      multiple
-                      onChange={handleFileChange}
-                      accept="image/*"
-                      className={styles["hidden-input"]}
-                    />
-                  </label>
-                </div>
-              )}
-            </div>
-          </DndProvider>
-        )}
-      </div>
       <div className={styles["article-detail-details-container"]}>
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -799,7 +728,7 @@ const ArticleDetail = ({ params }: ArticleDetailProps) => {
         {/* Solo renderizar DynamicPad si hay audios disponibles */}
         {(article?.audio?.length ?? 0) > 0 && (
           <div className={styles["dynamic-pad"]}>
-            {/* Aquí irá tu componente DynamicPad */}
+            <DynamicPad />
           </div>
         )}
       </div>

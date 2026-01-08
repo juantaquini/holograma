@@ -1,4 +1,4 @@
-.magazine-main-layout {
+.articles-main-layout {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -9,30 +9,44 @@
   padding: 120px 3vw 7vw 3vw;
 }
 
-.magazine-create-button {
+.articles-create-button {
   text-decoration: none;
   padding: 10px 20px;
   border-radius: 25px;
   background-color: var(--button-color);
   color: whitesmoke;
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 400;
   transition: all 0.3s ease;
   cursor: pointer;
   border: none;
   width: fit-content;
   outline-offset: 3px;
   font-family: "IBM Plex Sans";
-  margin-left: auto;
 }
 
-.magazine-featured-container {
+.articles-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.articles-filter-button {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid #1f2937;
+  background: rgba(0,0,0,0.3);
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.articles-featured-container {
   display: flex;
   flex-direction: row;
   gap: 6vw;
 }
 
-.magazine-featured-article {
+.articles-featured-article {
   flex: 1 1 50%;
   display: flex;
   flex-direction: column;
@@ -44,25 +58,25 @@
   color: inherit;
 }
 
-.magazine-featured-article:hover {
+.articles-featured-article:hover {
   text-decoration: none;
 }
 
-.magazine-featured-content {
+.articles-featured-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.magazine-featured-artist {
+.articles-featured-artist {
   color: var(--text-color-secondary);
   font-style: italic;
   font-size: 1.3rem;
   align-self: flex-start;
 }
 
-.magazine-featured-title {
+.articles-featured-title {
   font-size: 2rem;
   font-weight: 500;
   line-height: 1.1;
@@ -70,7 +84,7 @@
   color: var(--text-color);
 }
 
-.magazine-featured-content-text {
+.articles-featured-content-text {
   font-size: 0.9rem;
   color: var(--text-color);
   line-height: 1.5;
@@ -88,7 +102,7 @@
   text-decoration: none;
 }
 
-.magazine-featured-image {
+.articles-featured-image {
   width: 100%;
   max-height: 45vh;
   object-fit: cover;
@@ -96,7 +110,7 @@
   align-self: center;
 }
 
-.magazine-side-column {
+.articles-side-column {
   flex: 1 1 50%;
   display: flex;
   flex-direction: column;
@@ -109,13 +123,13 @@
   padding-right: 10px;
 }
 
-.magazine-side-article-link {
+.articles-side-article-link {
   text-decoration: none;
   width: 100%;
   display: flex;
 }
 
-.magazine-side-article {
+.articles-side-article {
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -125,7 +139,7 @@
   padding-bottom: 10px;
 }
 
-.magazine-side-texts {
+.articles-side-texts {
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -133,7 +147,7 @@
   gap: 2px;
 }
 
-.magazine-side-artist {
+.articles-side-artist {
   color: var(--text-color-secondary);
   font-style: italic;
   font-size: 1rem;
@@ -142,7 +156,7 @@
   overflow: hidden;
 }
 
-.magazine-side-title {
+.articles-side-title {
   font-size: 1.1rem;
   font-weight: 400;
   line-height: 1.1;
@@ -152,11 +166,11 @@
   color: var(--text-color);
 }
 
-.magazine-main-layout .custom-button-class {
+.articles-main-layout .custom-button-class {
   margin-left: auto;
 }
 
-.magazine-side-content {
+.articles-side-content {
   font-size: 0.9rem;
   color: var(--text-color);
   line-height: 1.4;
@@ -168,7 +182,7 @@
   max-width: 100%;
 }
 
-.magazine-side-image-container {
+.articles-side-image-container {
   flex-shrink: 0;
   width: 90px;
   height: 60px;
@@ -177,26 +191,26 @@
   justify-content: center;
 }
 
-.magazine-side-image {
+.articles-side-image {
   width: 90px;
   height: 60px;
   object-fit: cover;
   border-radius: 0.3vw;
 }
 
-.magazine-side-separator {
+.articles-side-separator {
   width: 100%;
   display: flex;
   align-self: stretch;
 }
 
 @media screen and (max-width: 768px) {
-  .magazine-featured-container {
+  .articles-featured-container {
     display: flex;
     flex-direction: column;
     gap: 40px;
   }
-  .magazine-main-layout {
+  .articles-main-layout {
     display: flex;
     flex-direction: column-reverse;
     padding-top: 80px;

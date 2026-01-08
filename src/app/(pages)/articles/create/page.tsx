@@ -68,15 +68,15 @@ const CreateArticle = () => {
           const userData = await get<UserData>(`/users/${user.uid}`);
           setIsAdmin(userData.role === "admin");
           if (userData.role !== "admin") {
-            router.push("/magazine");
+            router.push("/articles");
           }
         } catch (error) {
           console.error("Error al verificar el rol del usuario:", error);
           setIsAdmin(false);
-          router.push("/magazine");
+          router.push("/articles");
         }
       } else {
-        router.push("/magazine");
+        router.push("/articles");
       }
     };
 
@@ -218,7 +218,7 @@ const CreateArticle = () => {
       
       console.log("Response:", response);
 
-      router.push("/magazine");
+      router.push("/articles");
     } catch (error) {
       console.error("Error creating article:", error);
       alert("Error al crear el artículo. Por favor, intenta de nuevo.");
@@ -411,7 +411,7 @@ const CreateArticle = () => {
         <div className={styles["article-form-actions"]}>
           <button
             type="button"
-            onClick={() => router.push("/magazine")}
+            onClick={() => router.push("/articles")}
             className={styles["custom-red-button-class"]}
           >
             Cancel

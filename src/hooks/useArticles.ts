@@ -7,6 +7,9 @@ export interface Article {
   artist?: string;
   content?: string;
   image?: string[];
+  video?: string[];
+  audio?: string[];
+  author_uid?: string;
 }
 
 export const useArticles = () => {
