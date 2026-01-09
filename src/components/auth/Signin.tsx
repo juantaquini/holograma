@@ -8,6 +8,8 @@ import styles from "./AuthForm.module.css";
 import googleLogo from "@/assets/google_logo.svg";
 import Image from "next/image";
 import CustomTextInput from "@/components/inputs/CustomTextInput";
+import { getIdToken } from "firebase/auth";
+import type { User } from "firebase/auth";
 
 interface SigninProps {
   isPopup?: boolean;
@@ -35,8 +37,8 @@ const Signin: React.FC<SigninProps> = ({
 
   const { googleSignIn, emailSignUp } = auth;
 
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const {
     register,
@@ -53,16 +55,40 @@ const Signin: React.FC<SigninProps> = ({
 
   const passwordValue = watch("Password");
 
+  const syncUserWithBackend = async (firebaseUser: User) => {
+    const token = await getIdToken(firebaseUser);
+
+    console.log("🔥 Firebase UID:", firebaseUser.uid);
+    console.log("🔥 Token:", token.slice(0, 20), "...");
+
+    const res = await fetch("/api/auth/sync", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log("🔥 Sync status:", res.status);
+
+    const data = await res.json();
+    console.log("🔥 Sync response:", data);
+
+    if (!res.ok) throw new Error("Failed to sync user");
+  };
+
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
       setError("");
 
       const result = await googleSignIn();
+      await syncUserWithBackend(result.user);
 
       onClose?.();
       router.push("/interactives");
-    } catch {
+    } catch (err) {
+      console.error(err);
       setError("Google sign up failed. Please try again.");
     } finally {
       setIsLoading(false);
@@ -79,11 +105,13 @@ const Signin: React.FC<SigninProps> = ({
       setIsLoading(true);
       setError("");
 
-      await emailSignUp(data.Email, data.Password);
+      const result = await emailSignUp(data.Email, data.Password);
+      await syncUserWithBackend(result.user);
 
       onClose?.();
       router.push("/dashboard");
-    } catch {
+    } catch (err) {
+      console.error(err);
       setError("Failed to create account. Please try again.");
     } finally {
       setIsLoading(false);
@@ -93,21 +121,15 @@ const Signin: React.FC<SigninProps> = ({
   const Content = (
     <div className={styles["Auth-modal-container"]}>
       {isLoading && (
-        <div className={styles["Auth-modal-loading"]}>
-          Loading...
-        </div>
+        <div className={styles["Auth-modal-loading"]}>Loading...</div>
       )}
 
       <div className={styles["Auth-modal-header"]}>
         <p className={styles["Auth-modal-logo"]}>HOLOGRAMA</p>
-        <h2 className={styles["Auth-modal-title"]}>
-          Create your account
-        </h2>
+        <h2 className={styles["Auth-modal-title"]}>Create your account</h2>
       </div>
 
-      {error && (
-        <div className={styles["Auth-modal-error"]}>{error}</div>
-      )}
+      {error && <div className={styles["Auth-modal-error"]}>{error}</div>}
 
       <form
         className={styles["Auth-modal-form"]}
@@ -143,10 +165,7 @@ const Signin: React.FC<SigninProps> = ({
         </div>
 
         <div className={styles["Auth-modal-auth-buttons"]}>
-          <button
-            type="submit"
-            className={styles["Auth-modal-btn-primary"]}
-          >
+          <button type="submit" className={styles["Auth-modal-btn-primary"]}>
             Sign up
           </button>
 

@@ -1,91 +1,153 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from "react";
-import { useArticles } from "@/hooks/useArticles";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/app/(providers)/auth-provider";
-import { get } from "@/api/http";
 import Link from "next/link";
 import Image from "next/image";
 import styles from "./ArticleList.module.css";
 import LoadingSketch from "@/components/p5/loading/LoadingSketch";
 
+interface Article {
+  id: string;
+  title: string;
+  artist?: string;
+  content: string;
+  images: string[];
+  audios: string[];
+  videos: string[];
+  author_uid: string;
+}
+
 interface UserData {
   role: string;
 }
 
-interface ArticleListProps { filterUid?: string }
+interface ArticleListProps {
+  filterUid?: string;
+}
 
 const ArticleList = ({ filterUid }: ArticleListProps) => {
-  const { data: articlesData, isLoading } = useArticles();
-  const [isAdmin, setIsAdmin] = useState(false);
   const { user } = useAuth();
+
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [showMine, setShowMine] = useState(false);
 
+  // -------------------------
+  // FETCH ARTICLES
+  // -------------------------
   useEffect(() => {
-    const checkUserRole = async () => {
-      if (user?.uid) {
-        try {
-          const userData = await get<UserData>(`/users/${user.uid}`);
-          setIsAdmin(userData.role === "admin");
-        } catch {
-          setIsAdmin(false);
-        }
+    const fetchArticles = async () => {
+      try {
+        const res = await fetch("/api/articles", { cache: "no-store" });
+        if (!res.ok) throw new Error("Failed to fetch articles");
+        const data = await res.json();
+        setArticles(data);
+      } catch (err) {
+        console.error(err);
+        setArticles([]);
+      } finally {
+        setIsLoading(false);
       }
     };
-    checkUserRole();
+    fetchArticles();
+  }, []);
+
+  // -------------------------
+  // CHECK ROLE
+  // -------------------------
+  useEffect(() => {
+    const checkRole = async () => {
+      if (!user?.uid) return;
+      try {
+        const res = await fetch(`/api/users/${user.uid}`, { cache: "no-store" });
+        if (!res.ok) return;
+        const data: UserData = await res.json();
+        setIsAdmin(data.role === "admin");
+      } catch {
+        setIsAdmin(false);
+      }
+    };
+    checkRole();
   }, [user]);
 
+  // -------------------------
+  // LOADING
+  // -------------------------
   if (isLoading) return <LoadingSketch />;
-  if (!articlesData || articlesData.length === 0) return null;
 
-  const articles = articlesData;
+  if (!articles.length) {
+    return (
+      <div className={styles["articles-main-layout"]}>
+        <p className={styles["articles-empty-message"]}>There are no articles yet.</p>
+        {isAdmin && (
+          <Link href="/articles/create" className={styles["articles-create-button"]}>
+            Create the first article
+          </Link>
+        )}
+      </div>
+    );
+  }
+
+  // -------------------------
+  // FILTERING
+  // -------------------------
   const targetUid = filterUid ?? (showMine && user?.uid ? user.uid : undefined);
-  const list = targetUid ? (articles || []).filter((a: any) => a?.author_uid === targetUid) : articles;
+  const list = targetUid ? articles.filter(a => a.author_uid === targetUid) : articles;
 
+  if (!list.length) {
+    return (
+      <div className={styles["articles-main-layout"]}>
+        <p className={styles["articles-empty-message"]}>No articles match this filter.</p>
+      </div>
+    );
+  }
+
+  const featured = list[0];
+  const rest = list.slice(1);
+
+  // -------------------------
+  // RENDER
+  // -------------------------
   return (
     <div className={styles["articles-main-layout"]}>
+      {/* ACTIONS */}
       <div className={styles["articles-actions-row"]}>
         {!filterUid && user?.uid && (
           <button
             type="button"
             className={styles["articles-filter-button"]}
-            onClick={() => setShowMine((v) => !v)}
+            onClick={() => setShowMine(v => !v)}
           >
             {showMine ? "All articles" : "My articles"}
           </button>
         )}
+
         {isAdmin && (
-          <Link
-            href="/articles/create"
-            className={styles["articles-create-button"]}
-          >
+          <Link href="/articles/create" className={styles["articles-create-button"]}>
             Create new article
           </Link>
         )}
       </div>
 
+      {/* FEATURED */}
       <div className={styles["articles-featured-container"]}>
-        <Link
-          href={`/articles/${list[0]?.id}`}
-          className={styles["articles-featured-article"]}
-        >
+        <Link href={`/articles/${featured.id}`} className={styles["articles-featured-article"]}>
           <div className={styles["articles-featured-content"]}>
-            <span className={styles["articles-featured-artist"]}>
-              {list[0]?.artist}
-            </span>
-            <h1 className={styles["articles-featured-title"]}>
-              {list[0]?.title}
-            </h1>
-            <p className={styles["articles-featured-content-text"]}>
-              {list[0]?.content}
-            </p>
+            <h1 className={styles["articles-featured-title"]}>{featured.title}</h1>
+            {featured.artist && (
+              <h3 className={styles["articles-featured-artist"]}>{featured.artist}</h3>
+            )}
+            <p className={styles["articles-featured-content-text"]}>{featured.content}</p>
           </div>
 
-          {list[0]?.image?.[0] && (
+          {/* Featured image */}
+          {featured.images?.[0] && (
             <Image
               className={styles["articles-featured-image"]}
-              src={list[0].image[0]}
-              alt={list[0].title}
+              src={featured.images[0]}
+              alt={featured.title}
               width={800}
               height={600}
               priority
@@ -93,33 +155,26 @@ const ArticleList = ({ filterUid }: ArticleListProps) => {
           )}
         </Link>
 
+        {/* SIDE LIST */}
         <div className={styles["articles-side-column"]}>
-          {list.slice(1).map((article, idx) => (
+          {rest.map((article, idx) => (
             <div key={article.id}>
-              <Link
-                href={`/articles/${article.id}`}
-                className={styles["articles-side-article-link"]}
-              >
+              <Link href={`/articles/${article.id}`} className={styles["articles-side-article-link"]}>
                 <div className={styles["articles-side-article"]}>
                   <div className={styles["articles-side-texts"]}>
-                    <span className={styles["articles-side-artist"]}>
-                      {article.artist}
-                    </span>
-                    <span className={styles["articles-side-title"]}>
-                      {article.title}
-                    </span>
-                    <span className={styles["articles-side-content"]}>
-                      {article.content}
-                    </span>
+                    <span className={styles["articles-side-title"]}>{article.title}</span>
+                    {article.artist && (
+                      <span className={styles["articles-side-artist"]}>{article.artist}</span>
+                    )}
+                    <span className={styles["articles-side-content"]}>{article.content}</span>
                   </div>
 
-                  {article.image?.[0] && (
-                    <div
-                      className={styles["articles-side-image-container"]}
-                    >
+                  {/* Thumbnail */}
+                  {article.images?.[0] && (
+                    <div className={styles["articles-side-image-container"]}>
                       <Image
                         className={styles["articles-side-image"]}
-                        src={article.image[0]}
+                        src={article.images[0]}
                         alt={article.title}
                         width={200}
                         height={150}
@@ -129,7 +184,7 @@ const ArticleList = ({ filterUid }: ArticleListProps) => {
                 </div>
               </Link>
 
-              {idx < list.length - 2 && (
+              {idx < rest.length - 1 && (
                 <svg
                   className={styles["articles-side-separator"]}
                   xmlns="http://www.w3.org/2000/svg"

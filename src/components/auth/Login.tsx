@@ -9,9 +9,9 @@ import Link from "next/link";
 import styles from "./AuthForm.module.css";
 import googleLogo from "@/assets/google_logo.svg";
 import CustomTextInput from "@/components/inputs/CustomTextInput";
-import { post } from "@/api/http";
 import LoadingSketch from "@/components/p5/loading/LoadingSketch";
 import type { User } from "firebase/auth";
+import { getIdToken } from "firebase/auth";
 
 interface LoginProps {
   isPopup?: boolean;
@@ -49,27 +49,41 @@ const Login: React.FC<LoginProps> = ({
 
   const { googleSignIn, emailLogin } = auth;
 
-  const handleFirebaseAuth = async (firebaseUser: User) => {
-    try {
-      await post("/users/auth", {
-        uid: firebaseUser.uid,
-        email: firebaseUser.email,
-      });
-    } catch {
-      setError("Failed to sync user.");
-    }
+  const syncUserWithBackend = async (firebaseUser: User) => {
+    const token = await getIdToken(firebaseUser);
+
+    console.log("🔥 Firebase UID:", firebaseUser.uid);
+    console.log("🔥 Token:", token.slice(0, 20), "...");
+
+    const res = await fetch("/api/auth/sync", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log("🔥 Sync status:", res.status);
+
+    const data = await res.json();
+    console.log("🔥 Sync response:", data);
+
+    if (!res.ok) throw new Error("Failed to sync user");
   };
 
-  const handleGoogleLogin = async (
-    e: React.MouseEvent<HTMLButtonElement>
-  ) => {
+  const handleGoogleLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+
     try {
       setIsLoading(true);
+
       const result = await googleSignIn();
-      await handleFirebaseAuth(result.user);
+      await syncUserWithBackend(result.user);
+
       onClose?.();
-    } catch {
+      router.push("/interactives");
+    } catch (err) {
+      console.error(err);
       setError("Google sign-in failed.");
     } finally {
       setIsLoading(false);
@@ -79,12 +93,15 @@ const Login: React.FC<LoginProps> = ({
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
     setError("");
+
     try {
       const result = await emailLogin(data.Email, data.Password);
-      await handleFirebaseAuth(result.user);
+      await syncUserWithBackend(result.user);
+
       onClose?.();
       router.push("/interactives");
-    } catch {
+    } catch (err) {
+      console.error(err);
       setError("Invalid email or password.");
     } finally {
       setIsLoading(false);
@@ -97,14 +114,10 @@ const Login: React.FC<LoginProps> = ({
 
       <div className={styles["Auth-modal-header"]}>
         <p className={styles["Auth-modal-logo"]}>HOLOGRAMA</p>
-        <h2 className={styles["Auth-modal-header-title"]}>
-          Welcome back
-        </h2>
+        <h2 className={styles["Auth-modal-header-title"]}>Welcome back</h2>
       </div>
 
-      {error && (
-        <div className={styles["Auth-modal-error"]}>{error}</div>
-      )}
+      {error && <div className={styles["Auth-modal-error"]}>{error}</div>}
 
       <form
         className={styles["Auth-modal-form"]}
@@ -139,10 +152,7 @@ const Login: React.FC<LoginProps> = ({
         </div>
 
         <div className={styles["Auth-modal-auth-buttons"]}>
-          <button
-            type="submit"
-            className={styles["Auth-modal-btn-primary"]}
-          >
+          <button type="submit" className={styles["Auth-modal-btn-primary"]}>
             Log in
           </button>
 

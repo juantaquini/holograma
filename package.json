@@ -9,23 +9,18 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@dnd-kit/core": "^6.3.1",
-    "@dnd-kit/sortable": "^10.0.0",
-    "@dnd-kit/utilities": "^3.2.2",
-    "@tanstack/react-query": "^5.90.12",
+    "@supabase/supabase-js": "^2.90.1",
     "axios": "^1.13.2",
+    "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
-    "firebase": "^12.6.0",
+    "firebase": "^12.7.0",
+    "firebase-admin": "^13.6.0",
     "next": "^16.0.6",
-    "p5": "^2.1.1",
     "react": "19.2.0",
-    "react-dnd": "^16.0.1",
-    "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "19.2.0",
     "react-hook-form": "^7.68.0",
     "react-icons": "^5.5.0",
     "react-p5": "^1.4.1",
-    "swiper": "^12.0.3",
     "wavesurfer.js": "^7.12.1"
   },
   "devDependencies": {
