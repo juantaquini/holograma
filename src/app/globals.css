@@ -28,6 +28,8 @@ html body {
   overflow: auto;
 }
 
+/* ===== Scrollbar (tomado del segundo archivo) ===== */
+
 *::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -42,6 +44,8 @@ html body {
 *::-webkit-scrollbar-thumb {
   background-color: var(--text-color);
 }
+
+/* ================================================ */
 
 button {
   font-family: "IBM Plex Sans", sans-serif;

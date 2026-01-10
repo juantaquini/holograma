@@ -158,7 +158,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, article_id: article.id });
   } catch (err: any) {
-    console.error("❌ CREATE ARTICLE ERROR:", err);
+    console.error("CREATE ARTICLE ERROR:", err);
     return NextResponse.json({ error: err.message ?? "Internal error" }, { status: 500 });
   }
 }

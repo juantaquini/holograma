@@ -1,0 +1,12 @@
+// /app/articles/[id]/edit/page.tsx
+import EditArticlePage from "./components/EditArticlePage";
+
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+
+  return <EditArticlePage id={id} />;
+}

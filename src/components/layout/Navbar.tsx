@@ -30,7 +30,6 @@ export default function Navbar() {
   }
 
   const { user, logout } = auth;
-  console.log(user);
 
   const cycleTheme = () => {
     const next =
