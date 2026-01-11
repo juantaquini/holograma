@@ -118,11 +118,12 @@ const ArticlePage = ({ id }: ArticlePageProps) => {
         {/* Header Row */}
         <div className={styles["header-row"]}>
           <div className={styles["header-info"]}>
-            <h1 className={styles["article-title"]}>{article.title}</h1>
             {article.artist && (
               <p className={styles["article-artist"]}>{article.artist}</p>
             )}
           </div>
+          <h1 className={styles["article-title"]}>{article.title}</h1>
+
           <div className={styles["header-actions"]}>
             {user?.uid === article.author_uid && (
               <Link

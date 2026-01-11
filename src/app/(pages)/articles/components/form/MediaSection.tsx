@@ -1,5 +1,7 @@
+"use client";
+
 import { Reorder } from "framer-motion";
-import styles from "./EditArticle.module.css";
+import styles from "./ArticleForm.module.css";
 import { ExistingMedia, NewMedia, MediaKind } from "@/types/article";
 import { MediaItem } from "./MediaItem";
 
@@ -28,7 +30,7 @@ export function MediaSection({
   const addedFiltered = added.filter((m) => m.kind === kind);
 
   return (
-    <section>
+    <section className={styles["media-section"]}>
       <h3>{title}</h3>
 
       <Reorder.Group
@@ -37,25 +39,46 @@ export function MediaSection({
         onReorder={(newOrder: ExistingMedia[]) => {
           setExisting((prev) => {
             const others = prev.filter((m) => m.kind !== kind);
-            return [...others, ...newOrder];
+            return [
+              ...others,
+              ...newOrder.map((m, i) => ({
+                ...m,
+                position: i,
+              })),
+            ];
           });
         }}
         className={styles["article-media-preview"]}
       >
         {existingFiltered.map((m) => (
-          <Reorder.Item key={m.id} value={m}>
+          <Reorder.Item key={m.id} value={m} className={styles["media-wrapper"]}>
             <MediaItem url={m.url} kind={kind} />
-            <button onClick={() => removeExisting(m.id)}>✕</button>
+            <button
+              type="button"
+              className={styles.removeButton}
+              onClick={() => removeExisting(m.id)}
+            >
+              ✕
+            </button>
           </Reorder.Item>
         ))}
       </Reorder.Group>
 
-      {addedFiltered.map((m, i) => (
-        <div key={i}>
-          <MediaItem url={m.url} kind={kind} />
-          <button onClick={() => removeAdded(i)}>✕</button>
-        </div>
-      ))}
+      {/* NEW */}
+      <div className={styles["article-media-preview"]}>
+        {addedFiltered.map((m, i) => (
+          <div key={i} className={styles["media-wrapper"]}>
+            <MediaItem url={m.url} kind={kind} />
+            <button
+              type="button"
+              className={styles["remove-button"]}     
+              onClick={() => removeAdded(i)}
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+      </div>
 
       <input
         type="file"

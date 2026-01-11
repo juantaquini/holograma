@@ -5,27 +5,13 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { useAuth } from "@/app/(providers)/auth-provider";
 
-import { RiDeleteBin6Line } from "react-icons/ri";
-import { VscDiffAdded } from "react-icons/vsc";
-
 import CustomTextInput from "@/components/inputs/CustomTextInput";
 import CustomTextArea from "@/components/inputs/CustomTextArea";
 
+import { ExistingMedia, NewMedia, MediaKind } from "@/types/article";
+import { MediaSection } from "./MediaSection";
+
 import styles from "./ArticleForm.module.css";
-
-type MediaKind = "image" | "video" | "audio";
-
-type ArticleMedia = {
-  id: string;
-  url: string;
-  kind: MediaKind;
-};
-
-type NewMedia = {
-  file: File;
-  url: string;
-  kind: MediaKind;
-};
 
 interface ArticleFormProps {
   mode: "create" | "edit";
@@ -34,7 +20,11 @@ interface ArticleFormProps {
     title: string;
     artist?: string;
     content: string;
-    media: ArticleMedia[];
+    media: {
+      id: string;
+      url: string;
+      kind: MediaKind;
+    }[];
   };
 }
 
@@ -50,9 +40,13 @@ export default function ArticleForm({ mode, article }: ArticleFormProps) {
 
   const [uploading, setUploading] = useState(false);
 
-  const [existingMedia, setExistingMedia] = useState<ArticleMedia[]>(
-    article?.media || []
+  const [existingMedia, setExistingMedia] = useState<ExistingMedia[]>(
+    article?.media.map((m, i) => ({
+      ...m,
+      position: i,
+    })) || []
   );
+
   const [addedMedia, setAddedMedia] = useState<NewMedia[]>([]);
   const [removedMediaIds, setRemovedMediaIds] = useState<string[]>([]);
 
@@ -71,20 +65,17 @@ export default function ArticleForm({ mode, article }: ArticleFormProps) {
 
   if (!user) return <p>Tenés que estar logueado</p>;
 
-  /* -------------------------
-     MEDIA
-  ------------------------- */
+  /* MEDIA */
 
   const addFiles = (files: FileList | null) => {
     if (!files) return;
 
-    const items = Array.from(files).map((file) => {
-      let kind: MediaKind =
-        file.type.startsWith("image")
-          ? "image"
-          : file.type.startsWith("video")
-          ? "video"
-          : "audio";
+    const items: NewMedia[] = Array.from(files).map((file) => {
+      const kind: MediaKind = file.type.startsWith("image")
+        ? "image"
+        : file.type.startsWith("video")
+        ? "video"
+        : "audio";
 
       return {
         file,
@@ -108,9 +99,7 @@ export default function ArticleForm({ mode, article }: ArticleFormProps) {
     });
   };
 
-  /* -------------------------
-     SUBMIT
-  ------------------------- */
+  /* SUBMIT */
 
   const onSubmit = async (data: FormDataType) => {
     setUploading(true);
@@ -131,6 +120,13 @@ export default function ArticleForm({ mode, article }: ArticleFormProps) {
 
       addedMedia.forEach(({ file }) => {
         formData.append("media", file);
+      });
+
+      existingMedia.forEach((m) => {
+        formData.append("media_positions[]", JSON.stringify({
+          id: m.id,
+          position: m.position,
+        }));
       });
 
       const res = await fetch(
@@ -156,83 +152,62 @@ export default function ArticleForm({ mode, article }: ArticleFormProps) {
     }
   };
 
-  /* -------------------------
-     RENDER
-  ------------------------- */
+  /* RENDER */
 
   return (
-    <div className={styles["article-create-container"]}>
-      <h2 className={styles["article-create-title"]}>
-        {mode === "create" ? "Create Article" : "Edit Article"}
-      </h2>
+    <form onSubmit={handleSubmit(onSubmit)} className={styles.articleCreateForm}>
+      <CustomTextInput
+        name="title"
+        label="Title"
+        register={register}
+        error={errors.title}
+      />
 
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className={styles["article-create-form"]}
-      >
-        {/* TITLE + ARTIST */}
-        <div className={styles["article-create-input-pair"]}>
-          <CustomTextInput
-            name="title"
-            label="Title"
-            register={register}
-            error={errors.title}
-          />
-          <CustomTextInput
-            name="artist"
-            label="Artist"
-            register={register}
-            error={errors.artist}
-          />
-        </div>
+      <CustomTextInput
+        name="artist"
+        label="Artist"
+        register={register}
+        error={errors.artist}
+      />
 
-        {/* CONTENT */}
-        <CustomTextArea name="content" label="Content" control={control} />
+      <CustomTextArea name="content" label="Content" control={control} />
 
-        {/* MEDIA */}
-        <div className={styles["article-media-preview"]}>
-          {existingMedia.map((m) => (
-            <div key={m.id}>
-              {m.kind === "image" && <img src={m.url} />}
-              {m.kind === "video" && <video src={m.url} controls />}
-              {m.kind === "audio" && <audio src={m.url} controls />}
-              <button onClick={() => removeExisting(m.id)}>
-                <RiDeleteBin6Line />
-              </button>
-            </div>
-          ))}
+      <MediaSection
+        title="Images"
+        kind="image"
+        existing={existingMedia}
+        setExisting={setExistingMedia}
+        removeExisting={removeExisting}
+        added={addedMedia}
+        removeAdded={removeAdded}
+        addFiles={addFiles}
+      />
 
-          {addedMedia.map((m, i) => (
-            <div key={i}>
-              {m.kind === "image" && <img src={m.url} />}
-              {m.kind === "video" && <video src={m.url} controls />}
-              {m.kind === "audio" && <audio src={m.url} controls />}
-              <button onClick={() => removeAdded(i)}>
-                <RiDeleteBin6Line />
-              </button>
-            </div>
-          ))}
+      <MediaSection
+        title="Videos"
+        kind="video"
+        existing={existingMedia}
+        setExisting={setExistingMedia}
+        removeExisting={removeExisting}
+        added={addedMedia}
+        removeAdded={removeAdded}
+        addFiles={addFiles}
+      />
 
-          <label>
-            <VscDiffAdded /> Add media
-            <input
-              type="file"
-              multiple
-              accept="image/*,video/*,audio/*"
-              onChange={(e) => addFiles(e.target.files)}
-              hidden
-            />
-          </label>
-        </div>
+      <MediaSection
+        title="Audios"
+        kind="audio"
+        existing={existingMedia}
+        setExisting={setExistingMedia}
+        removeExisting={removeExisting}
+        added={addedMedia}
+        removeAdded={removeAdded}
+        addFiles={addFiles}
+      />
 
-        <button type="submit" disabled={uploading}>
-          {uploading
-            ? "Saving..."
-            : mode === "create"
-            ? "Create"
-            : "Save changes"}
-        </button>
-      </form>
-    </div>
+      <button type="submit" disabled={uploading}>
+        {uploading ? "Saving..." : "Save"}
+      </button>
+    </form>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import styles from "./EditArticle.module.css";
+import styles from "./ArticleForm.module.css";
 import { MediaKind } from "@/types/article";
 
 interface MediaItemProps {

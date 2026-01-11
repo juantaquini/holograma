@@ -37,6 +37,8 @@
 .gallery-container {
   height: auto;
   margin-top: 5rem;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .gallery-scroll {
@@ -82,7 +84,6 @@
   display: flex;
   flex-direction: column;
   flex: 1;
-  align-items: center;
 }
 
 .article-title {
@@ -107,6 +108,9 @@
 }
 
 .edit-button {
+  display: flex;
+  justify-content: center;
+  text-decoration: none;
   background-color: var(--button-color);
   color: #fff;
   cursor: pointer;
@@ -140,34 +144,6 @@
 
 .article-content {
   color: var(--text-primary, #525252);
-}
-
-/* Media Sections */
-.media-section {
-  color: var(--text-secondary, #737373);
-}
-
-.media-title {
-  font-size: 1rem;
-  font-weight: 500;
-  margin-bottom: 1rem;
-}
-
-.media-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.media-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.media-label {
-  font-size: 0.875rem;
-  margin-bottom: 0.5rem;
 }
 
 .audio-player,
