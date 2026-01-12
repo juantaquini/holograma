@@ -1,4 +1,4 @@
-.article-create-container {
+.article-form {
   width: 100%;
   font-family: "IBM Plex Sans";
   padding: 8vw 3vw 8vw 3vw;
@@ -10,7 +10,6 @@
 .article-create-input-pair {
   display: flex;
   flex-direction: row;
-  align-items: center;
   width: 100%;
   justify-content: space-between;
   gap: 20px;
@@ -72,41 +71,41 @@
 .article-media-preview {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  place-items: center;
   gap: 1rem;
   border: 1.5px dashed;
   padding: 8px;
   border-radius: 8px;
   overflow-x: auto;
   background-color: var(--lighter-bg-color);
+  min-height: 170px;
+  max-height: 315px;
+  overflow-y: auto;
 }
 
 .article-media-preview-item {
-  width: 100%;
-  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  width: 160px;
+  height: 140px;
+  aspect-ratio: 1 / 1; /* 🔥 CLAVE */
   object-fit: cover;
   border-radius: 8px;
   border: 1.5px dashed var(--text-color);
 }
 
-.article-media-remove-button {
-  position: absolute;
-  background-color: #ff0000;
-  color: white;
-  top: 10px;
-  right: 10px;
-  border-radius: 4px;
-  width: 25px;
-  height: 25px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
+.article-media-preview-item,
+.article-media-preview-item img,
+.article-media-preview-item video {
+  -webkit-user-drag: none;
+  user-drag: none;
+  user-select: none;
 }
 
-.article-media-remove-button:hover {
-  background-color: #ff4444;
-  color: white;
+.media-wrapper {
+  touch-action: pan-x;
 }
 
 .article-media-upload-container {
@@ -165,6 +164,7 @@
   font-size: 1rem;
   font-weight: 500;
   transition: opacity 0.3s;
+  margin-left: auto;
 }
 
 .article-form-submit-button:disabled {
@@ -196,16 +196,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-.article-media-preview {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 12px;
-  padding: 12px;
-  border: 1.5px dashed var(--text-color);
-  border-radius: 8px;
-  background-color: var(--lighter-bg-color);
+  flex: 1;
 }
 
 .media-wrapper {
@@ -224,19 +215,18 @@
   height: 40px;
 }
 
-.remove-button {  
+.remove-button {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 8px;
+  right: 8px;
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: red;
+  background: #fa2d2da8;
   color: white;
   border: none;
   cursor: pointer;
 }
-
 
 @media screen and (max-width: 768px) {
   .article-create-container {

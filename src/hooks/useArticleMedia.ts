@@ -21,6 +21,7 @@ const addFiles = (files: FileList | null) => {
       file,
       url: URL.createObjectURL(file),
       kind,
+      status: "uploading",
     };
   });
 

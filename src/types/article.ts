@@ -1,4 +1,5 @@
 export type MediaKind = "image" | "video" | "audio";
+export type UploadStatus = "uploading" | "ready" | "error";
 
 export interface BaseMedia {
   id: string;
@@ -14,4 +15,5 @@ export interface NewMedia {
   file: File;
   url: string;
   kind: MediaKind;
+  status: UploadStatus;
 }

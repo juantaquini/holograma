@@ -10,6 +10,7 @@ import CustomTextArea from "@/components/inputs/CustomTextArea";
 
 import { ExistingMedia, NewMedia, MediaKind } from "@/types/article";
 import { MediaSection } from "./MediaSection";
+import { uploadMedia } from "@/lib/functions/uploadMedia";
 
 import styles from "./ArticleForm.module.css";
 
@@ -38,7 +39,7 @@ export default function ArticleForm({ mode, article }: ArticleFormProps) {
   const router = useRouter();
   const { user } = useAuth();
 
-  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const [existingMedia, setExistingMedia] = useState<ExistingMedia[]>(
     article?.media.map((m, i) => ({
@@ -65,27 +66,58 @@ export default function ArticleForm({ mode, article }: ArticleFormProps) {
 
   if (!user) return <p>Tenés que estar logueado</p>;
 
-  /* MEDIA */
+  /* =======================
+     ADD FILES (UPLOAD YA)
+     ======================= */
 
-  const addFiles = (files: FileList | null) => {
+  const addFiles = async (files: FileList | null) => {
     if (!files) return;
 
-    const items: NewMedia[] = Array.from(files).map((file) => {
+    for (const file of Array.from(files)) {
       const kind: MediaKind = file.type.startsWith("image")
         ? "image"
         : file.type.startsWith("video")
         ? "video"
         : "audio";
 
-      return {
-        file,
-        url: URL.createObjectURL(file),
-        kind,
-      };
-    });
+      const tempUrl = URL.createObjectURL(file);
 
-    setAddedMedia((p) => [...p, ...items]);
+      // aparece inmediatamente
+      setAddedMedia((prev) => [
+        ...prev,
+        {
+          file,
+          url: tempUrl,
+          kind,
+          status: "uploading",
+        },
+      ]);
+
+      try {
+        const uploadedUrl = await uploadMedia(file);
+
+        setAddedMedia((prev) =>
+          prev.map((m) =>
+            m.url === tempUrl
+              ? { ...m, url: uploadedUrl, status: "ready" }
+              : m
+          )
+        );
+
+        URL.revokeObjectURL(tempUrl);
+      } catch {
+        setAddedMedia((prev) =>
+          prev.map((m) =>
+            m.url === tempUrl ? { ...m, status: "error" } : m
+          )
+        );
+      }
+    }
   };
+
+  /* =======================
+     REMOVE
+     ======================= */
 
   const removeExisting = (id: string) => {
     setExistingMedia((p) => p.filter((m) => m.id !== id));
@@ -93,19 +125,19 @@ export default function ArticleForm({ mode, article }: ArticleFormProps) {
   };
 
   const removeAdded = (index: number) => {
-    setAddedMedia((p) => {
-      URL.revokeObjectURL(p[index].url);
-      return p.filter((_, i) => i !== index);
-    });
+    setAddedMedia((p) => p.filter((_, i) => i !== index));
   };
 
-  /* SUBMIT */
+  /* =======================
+     SUBMIT (CREA / EDITA)
+     ======================= */
 
   const onSubmit = async (data: FormDataType) => {
-    setUploading(true);
+    setSaving(true);
 
     try {
       const formData = new FormData();
+
       formData.append("title", data.title);
       formData.append("artist", data.artist || "");
       formData.append("content", data.content);
@@ -118,16 +150,25 @@ export default function ArticleForm({ mode, article }: ArticleFormProps) {
         formData.append("removed_media_ids[]", id)
       );
 
-      addedMedia.forEach(({ file }) => {
-        formData.append("media", file);
-      });
+      existingMedia.forEach((m) =>
+        formData.append(
+          "media_positions[]",
+          JSON.stringify({ id: m.id, position: m.position })
+        )
+      );
 
-      existingMedia.forEach((m) => {
-        formData.append("media_positions[]", JSON.stringify({
-          id: m.id,
-          position: m.position,
-        }));
-      });
+      addedMedia
+        .filter((m) => m.status === "ready")
+        .forEach((m, index) =>
+          formData.append(
+            "new_media[]",
+            JSON.stringify({
+              url: m.url,
+              kind: m.kind,
+              position: index,
+            })
+          )
+        );
 
       const res = await fetch(
         mode === "create"
@@ -142,20 +183,27 @@ export default function ArticleForm({ mode, article }: ArticleFormProps) {
       if (!res.ok) throw new Error("Error guardando artículo");
 
       router.push(
-        mode === "create" ? "/articles" : `/articles/${article!.id}`
+        mode === "create"
+          ? "/articles"
+          : `/articles/${article!.id}`
       );
-    } catch (err) {
-      console.error(err);
+    } catch (e) {
+      console.error(e);
       alert("Error");
     } finally {
-      setUploading(false);
+      setSaving(false);
     }
   };
 
-  /* RENDER */
+  /* =======================
+     RENDER
+     ======================= */
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className={styles.articleCreateForm}>
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className={styles["article-form"]}
+    >
       <CustomTextInput
         name="title"
         label="Title"
@@ -170,7 +218,11 @@ export default function ArticleForm({ mode, article }: ArticleFormProps) {
         error={errors.artist}
       />
 
-      <CustomTextArea name="content" label="Content" control={control} />
+      <CustomTextArea
+        name="content"
+        label="Content"
+        control={control}
+      />
 
       <MediaSection
         title="Images"
@@ -205,8 +257,15 @@ export default function ArticleForm({ mode, article }: ArticleFormProps) {
         addFiles={addFiles}
       />
 
-      <button type="submit" disabled={uploading}>
-        {uploading ? "Saving..." : "Save"}
+      <button
+        type="submit"
+        disabled={
+          saving ||
+          addedMedia.some((m) => m.status === "uploading")
+        }
+        className={styles["article-form-submit-button"]}
+      >
+        {saving ? "Saving..." : "Save"}
       </button>
     </form>
   );
