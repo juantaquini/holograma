@@ -52,7 +52,6 @@ const CalmFirst: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Crear el audio solo en el cliente
     soundRef.current = new Audio("/assets/interactives/songs/llanto.wav");
     soundRef.current.loop = false;
     soundRef.current.load();

@@ -47,14 +47,12 @@ const Pad = (props) => {
   const [p5SoundLoaded, setP5SoundLoaded] = useState(false);
 
   useEffect(() => {
-    // Cargar p5.sound.js
     const script = document.createElement("script");
     script.src =
       "https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js";
     script.async = true;
     script.onload = () => {
       setP5SoundLoaded(true);
-      // Cargar react-p5 después de que p5.sound esté disponible
       import("react-p5").then((mod) => {
         setSketch(() => mod.default);
       });
@@ -84,13 +82,9 @@ const Pad = (props) => {
   };
 
   const draw = (p5) => {
-    // Fondo rojo por defecto
     p5.background(255, 0, 0);
 
-    // tecla L - loop (mantener presionada)
-    // tecla L - loop (mantener presionada)
     if (p5.keyIsDown(76)) {
-      // Iniciar sonidos si no están sonando
       if (!areSoundsStarted) {
         sound.loop();
         sound1.loop();
@@ -100,7 +94,6 @@ const Pad = (props) => {
         cubeRotation = 0;
       }
 
-      // Mostrar cubo con textura de suzi mientras se mantiene L
       p5.push();
       p5.translate(0, 0, -200);
       p5.rotateX(cubeRotation);
@@ -109,10 +102,8 @@ const Pad = (props) => {
       p5.box(90);
       p5.pop();
 
-      // Update cube rotation
       cubeRotation += 0.01;
     } else {
-      // Detener sonidos cuando se suelta L
       if (areSoundsStarted) {
         sound.stop();
         sound1.stop();
@@ -121,7 +112,6 @@ const Pad = (props) => {
         areSoundsStarted = false;
       }
     }
-    //tecla B - beat
     if (isSoundOn && sound.isPlaying()) {
       p5.push();
       const scaleValue = p5.sin(suziAngle);
@@ -146,7 +136,6 @@ const Pad = (props) => {
       isSoundOn = false;
     }
 
-    //letra K - bajo
     if (isSound1On && sound1.isPlaying()) {
       p5.push();
       const scaleValue = p5.sin(harmAngle);
@@ -197,7 +186,6 @@ const Pad = (props) => {
       isSound2On = false;
     }
 
-    //letra H
     if (p5.keyIsDown(72) && !isSound3On) {
       sound3.loop();
       isSound3On = true;
@@ -234,7 +222,6 @@ const Pad = (props) => {
       }
     }
 
-    // letra R - estrellas
     if (p5.keyIsDown(82) && !isSound4On) {
       sound4.loop();
       isSound4On = true;

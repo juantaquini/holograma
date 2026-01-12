@@ -1,4 +1,3 @@
-// /app/articles/[id]/edit/page.tsx
 import EditArticlePage from "./components/EditArticlePage";
 
 export default async function Page({

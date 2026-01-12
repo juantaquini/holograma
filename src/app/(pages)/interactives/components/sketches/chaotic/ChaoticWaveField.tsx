@@ -39,7 +39,6 @@ export default function BlueStormMountains() {
 
 
   const draw = (p5: any) => {
-    // Fondo con leve opacidad para dejar estela
     p5.noStroke();
     p5.fill(15, 20, 40, 28);
     p5.rect(0, 0, p5.width, p5.height);

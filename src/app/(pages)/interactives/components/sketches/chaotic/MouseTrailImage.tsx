@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import dynamic from "next/dynamic";
 import particleImage from "@/assets/interactives/design/stars.png";
 
-// Carga react-p5 sin SSR
 const Sketch = dynamic(() => import("react-p5"), {
   ssr: false,
 });
@@ -24,19 +23,16 @@ const MouseTrailImage: React.FC = () => {
     p5.angleMode(p5.DEGREES);
     p5.rectMode(p5.CENTER);
 
-    // Imagen cargada correctamente desde Next
     const img = p5.loadImage(particleImage.src, () => {
       setParticleImg(img);
     });
 
-    // 🔥 FIX: mouse real dentro del canvas
     canvas.elt.addEventListener("mousemove", (e: MouseEvent) => {
       const rect = canvas.elt.getBoundingClientRect();
       p5._mouseX = e.clientX - rect.left;
       p5._mouseY = e.clientY - rect.top;
     });
 
-    // Partículas iniciales
     const initial: any[] = [];
     for (let i = 0; i < 50; i++) {
       initial.push(new Particle(p5, p5.random(p5.width), p5.random(p5.height), img));
@@ -51,14 +47,12 @@ const MouseTrailImage: React.FC = () => {
     setParticles((prev) => {
       const updated = [...prev];
 
-      // actualizar + dibujar
       for (let i = updated.length - 1; i >= 0; i--) {
         updated[i].update(p5);
         updated[i].display(p5);
         if (updated[i].isDead()) updated.splice(i, 1);
       }
 
-      // seguir mouse real
       if (prevMouseX !== p5._mouseX || prevMouseY !== p5._mouseY) {
         if (updated.length < 350 && particleImg) {
           updated.push(new Particle(p5, p5._mouseX, p5._mouseY, particleImg));
@@ -71,7 +65,6 @@ const MouseTrailImage: React.FC = () => {
     });
   };
 
-  // Clase Partícula
   class Particle {
     position: any;
     velocity: any;

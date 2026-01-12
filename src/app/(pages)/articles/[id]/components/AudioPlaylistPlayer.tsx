@@ -23,7 +23,6 @@ const formatTime = (time: number) => {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 };
 
-/* ---------------- SAFE LOAD (AbortError FIX) ---------------- */
 const safeLoad = (ws: WaveSurfer, url: string) => {
   const result = ws.load(url);
   if (result instanceof Promise) {
@@ -50,7 +49,6 @@ export default function AudioPlaylistPlayer({
   const wavesurferRef = useRef<WaveSurfer | null>(null);
   const lastSecondRef = useRef(0);
 
-  /* ---------------- INIT WAVESURFER (ONCE) ---------------- */
   useEffect(() => {
     if (!waveformRef.current || audioUrls.length === 0) return;
 
@@ -90,10 +88,8 @@ export default function AudioPlaylistPlayer({
       ws.destroy();
       wavesurferRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* ---------------- TRACK CHANGE ---------------- */
   useEffect(() => {
     const ws = wavesurferRef.current;
     if (!ws || !audioUrls[currentIndex]) return;
@@ -102,7 +98,6 @@ export default function AudioPlaylistPlayer({
     setCurrentTime(0);
   }, [currentIndex, audioUrls]);
 
-  /* ---------------- CONTROLS ---------------- */
   const togglePlay = async () => {
     const ws = wavesurferRef.current;
     if (!ws) return;
@@ -118,7 +113,6 @@ export default function AudioPlaylistPlayer({
     setCurrentIndex((i) => (i > 0 ? i - 1 : i));
   };
 
-  /* ---------------- RENDER ---------------- */
   return (
     <div className={styles["wrapper"]}>
       <div className={styles["main"]}>

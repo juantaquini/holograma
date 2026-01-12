@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 
-// react-p5 debe cargarse sin SSR
 const Sketch = dynamic(() => import("react-p5"), {
   ssr: false,
 });
@@ -18,7 +17,6 @@ export default function GreenSpin() {
       if (dragging) e.preventDefault();
     };
 
-    // ☑ FIX: defining options object once fixes TS removeEventListener error
     const opts: AddEventListenerOptions & EventListenerOptions = {
       passive: false,
     };

@@ -26,14 +26,12 @@ type Article = {
   media: ArticleMedia[];
 };
 
-// --------------------
-// GET ARTICLES
-// --------------------
 export async function GET() {
   try {
     const { data, error } = await supabase
       .from("article")
-      .select(`
+      .select(
+        `
         id,
         title,
         artist,
@@ -51,7 +49,8 @@ export async function GET() {
             duration
           )
         )
-      `)
+      `
+      )
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -64,9 +63,15 @@ export async function GET() {
 
       return {
         ...article,
-        images: sorted.filter((m: any) => m.kind === "image").map((m: any) => m.url),
-        videos: sorted.filter((m: any) => m.kind === "video").map((m: any) => m.url),
-        audios: sorted.filter((m: any) => m.kind === "audio").map((m: any) => m.url),
+        images: sorted
+          .filter((m: any) => m.kind === "image")
+          .map((m: any) => m.url),
+        videos: sorted
+          .filter((m: any) => m.kind === "video")
+          .map((m: any) => m.url),
+        audios: sorted
+          .filter((m: any) => m.kind === "audio")
+          .map((m: any) => m.url),
         media: sorted,
       };
     });
@@ -74,13 +79,13 @@ export async function GET() {
     return NextResponse.json(articles, { status: 200 });
   } catch (err: any) {
     console.error("❌ GET ARTICLES ERROR:", err);
-    return NextResponse.json({ error: "Failed to fetch articles" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch articles" },
+      { status: 500 }
+    );
   }
 }
 
-// --------------------
-// POST ARTICLE
-// --------------------
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
@@ -89,76 +94,80 @@ export async function POST(req: Request) {
     const artist = formData.get("artist") as string;
     const content = formData.get("content") as string;
     const author_uid = formData.get("author_uid") as string;
-    const files = formData.getAll("media") as File[];
 
     if (!title || !author_uid) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
-    // 1️⃣ Crear artículo
+    /* =======================
+       1️⃣ CREATE ARTICLE
+       ======================= */
+
     const { data: article, error: articleError } = await supabase
       .from("article")
-      .insert({ title, artist, content, author_uid })
+      .insert({
+        title,
+        artist,
+        content,
+        author_uid,
+      })
       .select()
       .single();
 
     if (articleError) throw articleError;
 
-    // 2️⃣ Subir media
-    const audioExts = ["mp3", "wav", "ogg", "m4a"];
+    /* =======================
+       2️⃣ ASSOCIATE MEDIA
+       ======================= */
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const buffer = Buffer.from(await file.arrayBuffer());
+    const mediaRaw = formData.getAll("media_ids[]") as string[];
 
-      // Detectar si es audio
-      const ext = file.name.split(".").pop()?.toLowerCase();
-      const isAudio = audioExts.includes(ext!);
-
-      // Subir siempre con resource_type "auto" para evitar error TS
-      const upload = await new Promise<any>((resolve, reject) => {
-        cloudinary.uploader
-          .upload_stream(
-            { resource_type: "auto", folder: "articles" },
-            (err, res) => (err ? reject(err) : resolve(res))
-          )
-          .end(buffer);
+    if (mediaRaw.length > 0) {
+      const rows = mediaRaw.map((item) => {
+        const { id, position } = JSON.parse(item);
+        return {
+          article_id: article.id,
+          media_id: id,
+          position,
+        };
       });
 
-      // Guardar en DB con kind correcto
-      const kind: "image" | "video" | "audio" = isAudio
-        ? "audio"
-        : upload.resource_type === "image"
-        ? "image"
-        : "video";
+      const { error: linkError } = await supabase
+        .from("article_media")
+        .insert(rows);
 
-      const { data: media, error: mediaError } = await supabase
+      if (linkError) throw linkError;
+
+      /* =======================
+         3️⃣ FINALIZE MEDIA
+         ======================= */
+
+      const mediaIds = rows.map((r) => r.media_id);
+
+      const { error: mediaUpdateError } = await supabase
         .from("media")
-        .insert({
-          kind,
-          url: upload.secure_url,
-          provider: "cloudinary",
-          public_id: upload.public_id,
-          width: upload.width ?? null,
-          height: upload.height ?? null,
-          duration: upload.duration ?? null,
+        .update({
+          status: "ready",
+          session_id: null,
         })
-        .select()
-        .single();
+        .in("id", mediaIds);
 
-      if (mediaError) throw mediaError;
-
-      // Relacionar con article_media
-      await supabase.from("article_media").insert({
-        article_id: article.id,
-        media_id: media.id,
-        position: i,
-      });
+      if (mediaUpdateError) throw mediaUpdateError;
     }
 
-    return NextResponse.json({ success: true, article_id: article.id });
+    /* =======================
+       DONE
+       ======================= */
+
+    return NextResponse.json(
+      { success: true, article_id: article.id },
+      { status: 201 }
+    );
   } catch (err: any) {
-    console.error("CREATE ARTICLE ERROR:", err);
-    return NextResponse.json({ error: err.message ?? "Internal error" }, { status: 500 });
+    console.error("❌ CREATE ARTICLE ERROR:", err);
+    return NextResponse.json(
+      { error: err.message ?? "Internal server error" },
+      { status: 500 }
+    );
   }
 }

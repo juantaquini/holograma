@@ -34,9 +34,6 @@ const ArticleList = ({ filterUid }: ArticleListProps) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showMine, setShowMine] = useState(false);
 
-  // -------------------------
-  // FETCH ARTICLES
-  // -------------------------
   useEffect(() => {
     const fetchArticles = async () => {
       try {
@@ -54,9 +51,6 @@ const ArticleList = ({ filterUid }: ArticleListProps) => {
     fetchArticles();
   }, []);
 
-  // -------------------------
-  // CHECK ROLE
-  // -------------------------
   useEffect(() => {
     const checkRole = async () => {
       if (!user?.uid) return;
@@ -72,9 +66,6 @@ const ArticleList = ({ filterUid }: ArticleListProps) => {
     checkRole();
   }, [user]);
 
-  // -------------------------
-  // LOADING
-  // -------------------------
   if (isLoading) return <LoadingSketch />;
 
   if (!articles.length) {
@@ -90,9 +81,6 @@ const ArticleList = ({ filterUid }: ArticleListProps) => {
     );
   }
 
-  // -------------------------
-  // FILTERING
-  // -------------------------
   const targetUid = filterUid ?? (showMine && user?.uid ? user.uid : undefined);
   const list = targetUid ? articles.filter(a => a.author_uid === targetUid) : articles;
 
@@ -107,9 +95,6 @@ const ArticleList = ({ filterUid }: ArticleListProps) => {
   const featured = list[0];
   const rest = list.slice(1);
 
-  // -------------------------
-  // RENDER
-  // -------------------------
   return (
     <div className={styles["articles-main-layout"]}>
       {/* ACTIONS */}

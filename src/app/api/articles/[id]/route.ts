@@ -104,7 +104,6 @@ export async function PUT(
 
     if (articleError) throw articleError;
 
-    /* 2️⃣ Remove media */
     const removed = formData.getAll("removed_media_ids[]") as string[];
 
     if (removed.length > 0) {
@@ -117,7 +116,6 @@ export async function PUT(
       if (removeError) throw removeError;
     }
 
-    /* 3️⃣ Update positions */
     const positionsRaw = formData.getAll("media_positions[]") as string[];
 
     for (const item of positionsRaw) {
@@ -132,7 +130,6 @@ export async function PUT(
       if (posError) throw posError;
     }
 
-    /* 4️⃣ Upload NEW media (CLAVE 🔥) */
     const files = formData.getAll("media") as File[];
 
     const audioExts = ["mp3", "wav", "ogg", "m4a"];
@@ -173,7 +170,6 @@ export async function PUT(
 
       if (mediaError) throw mediaError;
 
-      /* posición al final */
       await supabase.from("article_media").insert({
         article_id: articleId,
         media_id: media.id,

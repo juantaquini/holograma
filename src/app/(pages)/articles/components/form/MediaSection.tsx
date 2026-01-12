@@ -11,62 +11,39 @@ import { MediaItem } from "./MediaItem";
 interface Props {
   title: string;
   kind: MediaKind;
+
   existing: ExistingMedia[];
-  setExisting: React.Dispatch<React.SetStateAction<ExistingMedia[]>>;
-  removeExisting: (id: string) => void;
   added: NewMedia[];
-  removeAdded: (index: number) => void;
+
+  order: string[];
+  setOrder: (ids: string[]) => void;
+
+  removeExisting: (id: string) => void;
+  removeAdded: (id: string) => void;
   addFiles: (files: FileList | null) => void;
 }
-
-type MediaUIItem =
-  | {
-      source: "existing";
-      id: string;
-      url: string;
-      kind: MediaKind;
-    }
-  | {
-      source: "new";
-      url: string;
-      kind: MediaKind;
-      addedIndex: number;
-    };
 
 export function MediaSection({
   title,
   kind,
   existing,
-  setExisting,
-  removeExisting,
   added,
+  order,
+  setOrder,
+  removeExisting,
   removeAdded,
   addFiles,
 }: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const items: MediaUIItem[] = useMemo(() => {
-    const existingItems: MediaUIItem[] = existing
-      .filter((m) => m.kind === kind)
-      .sort((a, b) => a.position - b.position)
-      .map((m) => ({
-        source: "existing",
-        id: m.id,
-        url: m.url,
-        kind: m.kind,
-      }));
-
-    const newItems: MediaUIItem[] = added
-      .filter((m) => m.kind === kind && m.status === "ready")
-      .map((m, index) => ({
-        source: "new",
-        url: m.url,
-        kind: m.kind,
-        addedIndex: index,
-      }));
-
-    return [...existingItems, ...newItems];
-  }, [existing, added, kind]);
+  const items = useMemo(() => {
+    return order
+      .map(
+        (id) =>
+          existing.find((m) => m.id === id) ?? added.find((m) => m.id === id)
+      )
+      .filter((m): m is ExistingMedia | NewMedia => !!m && m.kind === kind);
+  }, [order, existing, added, kind]);
 
   return (
     <section className={styles["media-section"]}>
@@ -74,51 +51,14 @@ export function MediaSection({
 
       <Reorder.Group
         axis="x"
-        values={items}
+        values={order}
+        onReorder={setOrder}
         className={styles["article-media-preview"]}
-        onReorder={(newOrder: MediaUIItem[]) => {
-          // 🔹 EXISTING
-          setExisting((prev) => {
-            const others = prev.filter((m) => m.kind !== kind);
-
-            const reorderedExisting = newOrder
-              .filter((i) => i.source === "existing")
-              .map((item, index) => {
-                const original = prev.find(
-                  (m) => m.id === item.id
-                )!;
-
-                return {
-                  ...original,
-                  position: index,
-                };
-              });
-
-            return [...others, ...reorderedExisting];
-          });
-
-          // 🔹 NEW
-          const reorderedAdded = newOrder.filter(
-            (i) => i.source === "new"
-          );
-
-          reorderedAdded.forEach((item, newIndex) => {
-            if (item.addedIndex !== newIndex) {
-              removeAdded(item.addedIndex);
-            }
-          });
-        }}
       >
         {items.map((item) => (
           <Reorder.Item
-            key={
-              item.source === "existing"
-                ? `existing-${item.id}`
-                : `new-${item.addedIndex}-${item.url}`
-            }
-            value={item}
-            drag={false}
-            dragListener={false}
+            key={item.id}
+            value={item.id}
             className={styles["media-wrapper"]}
           >
             <MediaItem url={item.url} kind={kind} />
@@ -127,9 +67,9 @@ export function MediaSection({
               type="button"
               className={styles["remove-button"]}
               onClick={() =>
-                item.source === "existing"
+                "position" in item
                   ? removeExisting(item.id)
-                  : removeAdded(item.addedIndex)
+                  : removeAdded(item.id)
               }
             >
               ✕
@@ -137,7 +77,6 @@ export function MediaSection({
           </Reorder.Item>
         ))}
 
-        {/* ADD */}
         <div
           className={styles["article-media-preview-item"]}
           onClick={() => inputRef.current?.click()}
@@ -145,19 +84,16 @@ export function MediaSection({
           <FiPlus />
         </div>
       </Reorder.Group>
-
-      {/* UPLOADING */}
       {added
         .filter((m) => m.kind === kind && m.status === "uploading")
-        .map((_, i) => (
+        .map((m) => (
           <div
-            key={`uploading-${i}`}
+            key={`uploading-${m.id}`}
             className={styles["article-media-preview-item"]}
           >
-            Subiendo…
+            Uploading...
           </div>
         ))}
-
       <input
         ref={inputRef}
         type="file"

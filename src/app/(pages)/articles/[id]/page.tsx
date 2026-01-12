@@ -1,4 +1,3 @@
-// /app/articles/[id]/page.tsx
 import ArticlePage from "./components/ArticlePage";
 
 export default async function Page({ 

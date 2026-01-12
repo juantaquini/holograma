@@ -26,13 +26,12 @@ export default function RedLiquidHD() {
     p5.noStroke();
     p5.colorMode(p5.RGB);
 
-    // Canvas secundario para render más rápido
     pg = p5.createGraphics(p5.width / 2, p5.height / 2);
     pg.pixelDensity(1);
   };
 
   const draw = (p5: p5Types) => {
-    t += 0.003; // más lento y suave
+    t += 0.003;
 
     const w = pg.width;
     const h = pg.height;
@@ -60,7 +59,6 @@ export default function RedLiquidHD() {
 
     pg.updatePixels();
 
-    // Escalamos al canvas principal
     p5.image(pg, 0, 0, p5.width, p5.height);
   };
 

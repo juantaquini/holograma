@@ -1,17 +1,23 @@
-// POST /api/media
-export async function uploadMedia(file: File): Promise<string> {
-  const formData = new FormData();
-  formData.append("file", file);
+import { MediaKind } from "@/types/article";
+
+export async function uploadMedia(
+  file: File,
+  sessionId: string
+): Promise<{
+  id: string;
+  url: string;
+  kind: MediaKind;
+}> {
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("session_id", sessionId);
 
   const res = await fetch("/api/media", {
     method: "POST",
-    body: formData,
+    body: fd,
   });
 
-  if (!res.ok) {
-    throw new Error("Upload failed");
-  }
+  if (!res.ok) throw new Error("Upload failed");
 
-  const data = await res.json();
-  return data.url; // 👈 URL FINAL (S3 / Cloudinary / etc)
+  return res.json();
 }

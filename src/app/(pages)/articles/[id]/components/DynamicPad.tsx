@@ -6,7 +6,6 @@ import { useParams } from "next/navigation";
 import { useArticleDetail } from "@/hooks/useArticles";
 import type p5Types from "p5";
 
-// Dynamically import react-p5 with no SSR
 const Sketch = dynamic(() => import("react-p5").then((mod) => mod.default), {
   ssr: false,
 });
