@@ -98,27 +98,31 @@ export default function ArticleForm({ mode, article }: ArticleFormProps) {
         formData.append("removed_media_ids[]", id);
       });
 
-      existing.forEach((m) => {
-        formData.append(
-          "media_positions[]",
-          JSON.stringify({
-            id: m.id,
-            position: m.position,
-          })
-        );
-      });
+      // ✅ Usar el array `order` para las posiciones correctas
+      order.forEach((id, position) => {
+        const existingMedia = existing.find((m) => m.id === id);
+        const addedMedia = added.find((m) => m.id === id);
 
-      added
-        .filter((m) => m.status === "ready")
-        .forEach((m, index) => {
+        if (existingMedia) {
+          // Media que ya existía: actualizar su posición
+          formData.append(
+            "media_positions[]",
+            JSON.stringify({
+              id: existingMedia.id,
+              position,
+            })
+          );
+        } else if (addedMedia && addedMedia.status === "ready") {
+          // Media nueva: enviar con su posición en el orden
           formData.append(
             "media_ids[]",
             JSON.stringify({
-              id: m.id,
-              position: index,
+              id: addedMedia.id,
+              position,
             })
           );
-        });
+        }
+      });
 
       const res = await fetch(
         mode === "create" ? "/api/articles" : `/api/articles/${article!.id}`,
@@ -140,7 +144,6 @@ export default function ArticleForm({ mode, article }: ArticleFormProps) {
       setSaving(false);
     }
   };
-
   return (
     <form onSubmit={handleSubmit(onSubmit)} className={styles["article-form"]}>
       <div className={styles["article-create-input-pair"]}>
@@ -152,7 +155,7 @@ export default function ArticleForm({ mode, article }: ArticleFormProps) {
         />
         <CustomTextInput
           name="artist"
-          label="Artist"
+          label="Author"
           register={register}
           error={errors.artist}
         />

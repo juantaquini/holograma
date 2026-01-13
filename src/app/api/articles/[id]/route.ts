@@ -4,11 +4,22 @@ import cloudinary from "@/lib/cloudinary/cloudinary";
 
 export const runtime = "nodejs";
 
+function getMediaKind(fileName: string, cloudinaryResourceType: string): "image" | "video" | "audio" {
+  const ext = fileName.split(".").pop()?.toLowerCase() || "";
+  const audioExts = ["mp3", "wav", "ogg", "m4a", "aac", "flac", "wma", "aiff"];
+  
+  if (audioExts.includes(ext)) {
+    return "audio";
+  }
+  
+  return cloudinaryResourceType === "image" ? "image" : "video";
+}
+
 export async function GET(
   req: Request,
-  { params }: { params: Promise<{ id: string }> } // ✅ params is a Promise
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id: idParam } = await params; // ✅ await params
+  const { id: idParam } = await params;
   const id = Number(idParam);
 
   if (!id || isNaN(id)) {
@@ -52,7 +63,6 @@ export async function GET(
     return NextResponse.json({ error: "Article not found" }, { status: 404 });
   }
 
-  // Format the response similar to GET all articles
   const sorted = (data.article_media || [])
     .sort((a: any, b: any) => a.position - b.position)
     .map((am: any) => am.media)
@@ -104,6 +114,7 @@ export async function PUT(
 
     if (articleError) throw articleError;
 
+    /* 2️⃣ Remove deleted media */
     const removed = formData.getAll("removed_media_ids[]") as string[];
 
     if (removed.length > 0) {
@@ -116,6 +127,7 @@ export async function PUT(
       if (removeError) throw removeError;
     }
 
+    /* 3️⃣ Update positions of existing media */
     const positionsRaw = formData.getAll("media_positions[]") as string[];
 
     for (const item of positionsRaw) {
@@ -130,51 +142,37 @@ export async function PUT(
       if (posError) throw posError;
     }
 
-    const files = formData.getAll("media") as File[];
+    /* 4️⃣ Add new media (already uploaded to /api/media) */
+    const mediaIdsRaw = formData.getAll("media_ids[]") as string[];
 
-    const audioExts = ["mp3", "wav", "ogg", "m4a"];
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const buffer = Buffer.from(await file.arrayBuffer());
-
-      const ext = file.name.split(".").pop()?.toLowerCase();
-      const isAudio = ext && audioExts.includes(ext);
-
-      const upload = await new Promise<any>((resolve, reject) => {
-        cloudinary.uploader.upload_stream(
-          { resource_type: "auto", folder: "articles" },
-          (err, res) => (err ? reject(err) : resolve(res))
-        ).end(buffer);
+    if (mediaIdsRaw.length > 0) {
+      const rows = mediaIdsRaw.map((item) => {
+        const { id, position } = JSON.parse(item);
+        return {
+          article_id: articleId,
+          media_id: id,
+          position,
+        };
       });
 
-      const kind: "image" | "video" | "audio" = isAudio
-        ? "audio"
-        : upload.resource_type === "image"
-        ? "image"
-        : "video";
+      const { error: linkError } = await supabase
+        .from("article_media")
+        .insert(rows);
 
-      const { data: media, error: mediaError } = await supabase
+      if (linkError) throw linkError;
+
+      /* 5️⃣ Finalize media (change status from temp to ready) */
+      const mediaIds = rows.map((r) => r.media_id);
+
+      const { error: mediaUpdateError } = await supabase
         .from("media")
-        .insert({
-          kind,
-          url: upload.secure_url,
-          provider: "cloudinary",
-          public_id: upload.public_id,
-          width: upload.width ?? null,
-          height: upload.height ?? null,
-          duration: upload.duration ?? null,
+        .update({
+          status: "ready",
+          session_id: null,
         })
-        .select()
-        .single();
+        .in("id", mediaIds);
 
-      if (mediaError) throw mediaError;
-
-      await supabase.from("article_media").insert({
-        article_id: articleId,
-        media_id: media.id,
-        position: positionsRaw.length + i,
-      });
+      if (mediaUpdateError) throw mediaUpdateError;
     }
 
     return NextResponse.json({ success: true }, { status: 200 });
@@ -186,4 +184,3 @@ export async function PUT(
     );
   }
 }
-

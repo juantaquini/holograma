@@ -58,6 +58,7 @@ const ArticleList = ({ filterUid }: ArticleListProps) => {
         const res = await fetch(`/api/users/${user.uid}`, { cache: "no-store" });
         if (!res.ok) return;
         const data: UserData = await res.json();
+        console.log(data)
         setIsAdmin(data.role === "admin");
       } catch {
         setIsAdmin(false);
@@ -99,23 +100,12 @@ const ArticleList = ({ filterUid }: ArticleListProps) => {
     <div className={styles["articles-main-layout"]}>
       {/* ACTIONS */}
       <div className={styles["articles-actions-row"]}>
-        {!filterUid && user?.uid && (
-          <button
-            type="button"
-            className={styles["articles-filter-button"]}
-            onClick={() => setShowMine(v => !v)}
-          >
-            {showMine ? "All articles" : "My articles"}
-          </button>
-        )}
-
         {isAdmin && (
           <Link href="/articles/create" className={styles["articles-create-button"]}>
             Create new article
           </Link>
         )}
       </div>
-
       {/* FEATURED */}
       <div className={styles["articles-featured-container"]}>
         <Link href={`/articles/${featured.id}`} className={styles["articles-featured-article"]}>

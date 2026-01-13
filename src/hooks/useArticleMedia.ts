@@ -1,8 +1,20 @@
-import { useRef, useState } from "react";
+import { useRef, useState, Dispatch, SetStateAction } from "react";
 import { ExistingMedia, NewMedia, MediaKind } from "@/types/article";
 import { uploadMedia } from "@/lib/functions/uploadMedia";
 
-export function useArticleMedia(initial: ExistingMedia[] = []) {
+interface UseArticleMediaReturn {
+  existing: ExistingMedia[];
+  added: NewMedia[];
+  removed: string[];
+  order: string[];
+  setOrder: Dispatch<SetStateAction<string[]>>;
+  setExisting: Dispatch<SetStateAction<ExistingMedia[]>>;
+  addFiles: (files: FileList | null) => Promise<void>;
+  removeExisting: (id: string) => void;
+  removeAdded: (id: string) => void;
+}
+
+export function useArticleMedia(initial: ExistingMedia[] = []): UseArticleMediaReturn {
   const [existing, setExisting] = useState<ExistingMedia[]>(initial);
   const [added, setAdded] = useState<NewMedia[]>([]);
   const [removed, setRemoved] = useState<string[]>([]);

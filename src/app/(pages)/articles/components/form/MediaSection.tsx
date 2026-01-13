@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, Dispatch, SetStateAction } from "react";
 import { Reorder } from "framer-motion";
 import { FiPlus } from "react-icons/fi";
 
-import styles from "./ArticleForm.module.css";
+import styles from "./MediaSection.module.css";
 import { ExistingMedia, NewMedia, MediaKind } from "@/types/article";
 import { MediaItem } from "./MediaItem";
 
@@ -16,7 +16,7 @@ interface Props {
   added: NewMedia[];
 
   order: string[];
-  setOrder: (ids: string[]) => void;
+  setOrder: Dispatch<SetStateAction<string[]>>;
 
   removeExisting: (id: string) => void;
   removeAdded: (id: string) => void;
@@ -40,60 +40,86 @@ export function MediaSection({
     return order
       .map(
         (id) =>
-          existing.find((m) => m.id === id) ?? added.find((m) => m.id === id)
+          existing.find((m) => m.id === id) ??
+          added.find((m) => m.id === id)
       )
-      .filter((m): m is ExistingMedia | NewMedia => !!m && m.kind === kind);
+      .filter(
+        (m): m is ExistingMedia | NewMedia =>
+          !!m && m.kind === kind
+      );
   }, [order, existing, added, kind]);
+
+  // ✅ Handler personalizado que solo actualiza items del kind actual
+  const handleReorder = (newItemIds: string[]) => {
+    setOrder((prevOrder) => {
+      // Separar IDs por kind
+      const otherKindIds = prevOrder.filter((id) => {
+        const item = existing.find((m) => m.id === id) ?? added.find((m) => m.id === id);
+        return item && item.kind !== kind;
+      });
+
+      // Combinar: mantener otros kinds + nuevo orden del kind actual
+      return [...otherKindIds, ...newItemIds];
+    });
+  };
 
   return (
     <section className={styles["media-section"]}>
-      <h3>{title}</h3>
+      <p className={styles["media-section-title"]}>{title}</p>
 
       <Reorder.Group
         axis="x"
-        values={order}
-        onReorder={setOrder}
-        className={styles["article-media-preview"]}
+        values={items.map(item => item.id)}
+        onReorder={handleReorder}
+        className={styles["media-preview"]}
       >
-        {items.map((item) => (
-          <Reorder.Item
-            key={item.id}
-            value={item.id}
-            className={styles["media-wrapper"]}
-          >
-            <MediaItem url={item.url} kind={kind} />
+        {items.map((item) => {
+          const isUploading =
+            "status" in item && item.status === "uploading";
 
-            <button
-              type="button"
-              className={styles["remove-button"]}
-              onClick={() =>
-                "position" in item
-                  ? removeExisting(item.id)
-                  : removeAdded(item.id)
-              }
+          return (
+            <Reorder.Item
+              key={item.id}
+              value={item.id}
+              drag={!isUploading}
+              className={styles["media-wrapper"]}
             >
-              ✕
-            </button>
-          </Reorder.Item>
-        ))}
+              <div className={styles["media-inner"]}>
+                <MediaItem url={item.url} kind={kind} />
 
+                {isUploading && (
+                  <div className={styles["upload-overlay"]}>
+                    <div className={styles["upload-spinner"]} />
+                  </div>
+                )}
+
+                {!isUploading && (
+                  <button
+                    type="button"
+                    className={styles["remove-button"]}
+                    onClick={() =>
+                      "position" in item
+                        ? removeExisting(item.id)
+                        : removeAdded(item.id)
+                    }
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </Reorder.Item>
+          );
+        })}
+
+        {/* ADD BUTTON */}
         <div
-          className={styles["article-media-preview-item"]}
+          className={styles["add-media-button"]}
           onClick={() => inputRef.current?.click()}
         >
           <FiPlus />
         </div>
       </Reorder.Group>
-      {added
-        .filter((m) => m.kind === kind && m.status === "uploading")
-        .map((m) => (
-          <div
-            key={`uploading-${m.id}`}
-            className={styles["article-media-preview-item"]}
-          >
-            Uploading...
-          </div>
-        ))}
+
       <input
         ref={inputRef}
         type="file"

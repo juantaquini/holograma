@@ -4,6 +4,17 @@ import { supabase } from "@/lib/supabase/supabase-server";
 
 export const runtime = "nodejs";
 
+function getMediaKind(file: File, cloudinaryResourceType: string): "image" | "video" | "audio" {
+  const ext = file.name.split(".").pop()?.toLowerCase() || "";
+  const audioExts = ["mp3", "wav", "ogg", "m4a", "aac", "flac", "wma", "aiff"];
+  
+  if (audioExts.includes(ext)) {
+    return "audio";
+  }
+  
+  return cloudinaryResourceType === "image" ? "image" : "video";
+}
+
 export async function POST(req: Request) {
   const formData = await req.formData();
 
@@ -23,12 +34,7 @@ export async function POST(req: Request) {
     ).end(buffer);
   });
 
-  const kind =
-    upload.resource_type === "image"
-      ? "image"
-      : upload.resource_type === "video"
-      ? "video"
-      : "audio";
+  const kind = getMediaKind(file, upload.resource_type);
 
   const { data, error } = await supabase
     .from("media")
@@ -39,6 +45,9 @@ export async function POST(req: Request) {
       kind,
       status: "temp",
       session_id: sessionId,
+      width: upload.width ?? null,
+      height: upload.height ?? null,
+      duration: upload.duration ?? null,
     })
     .select()
     .single();
@@ -47,3 +56,5 @@ export async function POST(req: Request) {
 
   return NextResponse.json(data);
 }
+
+export { getMediaKind };

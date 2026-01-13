@@ -44,7 +44,6 @@
 .gallery-scroll {
   display: flex;
   height: 100%;
-  gap: 1rem;
   scroll-snap-type: x mandatory;
 }
 
