@@ -5,15 +5,15 @@ import Image from "next/image";
 import Link from "next/link";
 import styles from "./InteractiveList.module.css";
 import calm from "@/assets/interactives/calm.png";
-import calm2 from "@/assets/interactives/calm2.png";
-import chaotic from "@/assets/interactives/chaotic.png";
+import calm2 from "@/assets/interactives/calm2.jpg";
+import chaotic from "@/assets/interactives/chaotic.jpg";
 import chaotic2 from "@/assets/interactives/chaotic2.png";
-import design from "@/assets/interactives/design.png";
+import design from "@/assets/interactives/design.jpg";
 import design2 from "@/assets/interactives/design2.png";
-import dynamic from "@/assets/interactives/dynamic.png";
+import dynamic from "@/assets/interactives/dynamic.jpg";
 import experimental from "@/assets/interactives/experimental.png";
 import nature from "@/assets/interactives/nature.png";
-import psychedelic from "@/assets/interactives/psychedelic.png";
+import psychedelic from "@/assets/interactives/psychedelic.jpg";
 
 const InteractiveList = () => {
   const [hoveredDescription, setHoveredDescription] = useState(
