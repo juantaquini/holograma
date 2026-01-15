@@ -9,6 +9,7 @@ import LoadingSketch from "@/components/p5/loading/LoadingSketch";
 import Link from "next/link";
 import styles from "./ArticlePage.module.css";
 import AudioPlaylistPlayer from "./AudioPlaylistPlayer";
+import DynamicPad from "./DynamicPad";
 
 interface ArticleMedia {
   id: string;
@@ -136,34 +137,36 @@ const ArticlePage = ({ id }: ArticlePageProps) => {
           </div>
         </div>
 
-        {/* Main Content */}
         <div className={styles["main-content"]}>
           <div className={styles["content-inner"]}>
-            {/* Date on mobile */}
-            {article.created_at && (
-              <div className={styles["article-date-mobile"]}>
-                <p>
-                  {new Date(article.created_at).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </p>
-              </div>
-            )}
-
-            {/* Article Content */}
-            <div
-              className={styles["article-content"]}
-              dangerouslySetInnerHTML={{ __html: article.content }}
-            />
-
-            {/* Audio Files */}
             {article.audios.length > 0 && (
               <div className={styles["media-section"]}>
                 <AudioPlaylistPlayer audioUrls={article.audios} />
               </div>
             )}
+            <div className={styles["article-content-container"]}>
+              <div
+                className={styles["article-content"]}
+                dangerouslySetInnerHTML={{ __html: article.content }}
+              />
+              {article.videos.length > 0 && (
+                <video
+                  className={styles["video-player"]}
+                  src={article.videos[0]}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                />
+              )}
+            </div>
+                          {article.audios.length > 0 && (
+                <DynamicPad
+                  audios={article.audios}
+                  images={article.images}
+                  videos={article.videos}
+                />
+              )}
           </div>
         </div>
       </Container>

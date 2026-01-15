@@ -1,274 +1,338 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import dynamic from "next/dynamic";
-import { useParams } from "next/navigation";
-import { useArticleDetail } from "@/hooks/useArticles";
-import type p5Types from "p5";
+import React, { useEffect, useRef, useState } from "react";
+import { useColorTheme } from "@/app/(providers)/color-theme-provider";
+import { colorPalettes } from "@/lib/color-palettes";
 
-const Sketch = dynamic(() => import("react-p5").then((mod) => mod.default), {
-  ssr: false,
-});
-
-interface DynamicPadProps {
-  theme?: string;
+interface Props {
+  audios: string[];
+  images?: string[];
+  videos?: string[];
 }
 
-const colorPalettes: Record<string, { text_secondary: string }> = {
-  dark: { text_secondary: "#ffffff" },
-  light: { text_secondary: "#000000" },
-};
+const KEYS = [75, 66, 83, 72]; // K B S H
 
-const DynamicPad: React.FC<DynamicPadProps> = ({ theme = "dark" }) => {
-  const params = useParams();
-  const id = Number(params?.id);
-  const selectedColors = colorPalettes[theme]?.text_secondary || "#000000";
-  const hex = selectedColors;
-  const alpha = 100;
+const DynamicPad: React.FC<Props> = ({
+  audios,
+  images = [],
+  videos = [],
+}) => {
+  const { theme } = useColorTheme();
+  const palette = colorPalettes[theme];
 
-  const { data: article, isLoading, error } = useArticleDetail(id);
-
-  const [loadedSounds, setLoadedSounds] = useState<any[]>([]);
-  const [loadedImage, setLoadedImage] = useState<any>(null);
-  const [loadedVideo, setLoadedVideo] = useState<any>(null);
-  const [soundStates, setSoundStates] = useState<boolean[]>([]);
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const [imageAngle, setImageAngle] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
-  const [isTouching, setIsTouching] = useState(false);
+  const sounds = useRef<any[]>([]);
+  const soundOn = useRef<boolean[]>([]);
+  const imgs = useRef<any[]>([]);
+  const vids = useRef<any[]>([]);
+  const alphaPhase = useRef<number[]>([0, 1, 2, 3]);
+  const activeTouches = useRef<Map<number, number>>(new Map()); // touchId -> quadrant
   const canvasRef = useRef<any>(null);
 
-  const images = article?.image || [];
-  const videos = article?.video || [];
-  const audios = article?.audio || [];
+  const [isMobile, setIsMobile] = useState(false);
+  const [Sketch, setSketch] = useState<any>(null);
+  const [p5SoundLoaded, setP5SoundLoaded] = useState(false);
 
-  const audioCount = Math.min(audios?.length || 0, 6);
-  const keys = [75, 66, 83, 72, 78, 77]; // K, B, S, H, N, M
-
+  // Cargar p5.sound primero
   useEffect(() => {
-    const checkMobile = () => {
-      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
-        userAgent.toLowerCase()
-      );
-      setIsMobile(isMobileDevice);
+    const script = document.createElement("script");
+    script.src =
+      "https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js";
+    script.async = true;
+    script.onload = () => {
+      setP5SoundLoaded(true);
+      import("react-p5").then((mod) => {
+        setSketch(() => mod.default);
+      });
     };
+    document.body.appendChild(script);
 
-    checkMobile();
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
   }, []);
 
-  const preload = (p5: any) => {
-    if (audios && audios.length > 0) {
-      const sounds: any[] = [];
-      const states: boolean[] = [];
-      const hasP5Sound = typeof (p5 as any).loadSound === "function";
-      for (let i = 0; i < audioCount; i++) {
-        try {
-          if (hasP5Sound) {
-            sounds[i] = (p5 as any).loadSound(audios[i]);
-          } else {
-            const audio = new Audio(audios[i]);
-            audio.loop = true;
-            sounds[i] = {
-              loop: () => { audio.currentTime = 0; audio.play(); },
-              stop: () => { audio.pause(); },
-              isPlaying: () => !audio.paused,
-              _audio: audio,
-            } as any;
-          }
-          states[i] = false;
-        } catch (error) {
-          console.error(`Error loading sound ${i}:`, error);
-        }
-      }
-      setLoadedSounds(sounds);
-      setSoundStates(states);
-    }
-
-    if (images.length > 0) {
-      try {
-        const img = p5.loadImage(images[0]);
-        setLoadedImage(img);
-      } catch (error) {
-        console.error("Error loading image:", error);
-      }
-    }
-
-    if (videos.length > 0) {
-      try {
-        const video = (p5 as any).createVideo([videos[0]]);
-        video.hide();
-        video.volume(0);
-        video.elt.muted = true;
-        setLoadedVideo(video);
-      } catch (error) {
-        console.error("Error loading video:", error);
-      }
-    }
-  };
-
-  const setup = (p5: any, canvasParentRef: Element) => {
-    const canvas = p5.createCanvas(
-      p5.windowWidth - 180,
-      p5.windowHeight * 0.8,
-      (p5 as any).WEBGL
-    );
-    canvas.parent(canvasParentRef);
-    canvasRef.current = canvas;
-
-    if ((canvas as any).elt) {
-      (canvas as any).elt.addEventListener("touchstart", () => {
-        setIsTouching(true);
-      });
-
-      (canvas as any).elt.addEventListener("touchend", () => {
-        setIsTouching(false);
-      });
-
-      (canvas as any).elt.addEventListener("touchmove", (e: TouchEvent) => {
-        e.preventDefault();
-      });
-
-      (canvas as any).elt.addEventListener("touchcancel", () => {
-        setIsTouching(false);
-      });
-    }
-  };
-
-  const windowResized = (p5: any) => {
-    p5.resizeCanvas(p5.windowWidth - 40, p5.windowHeight * 0.7);
-  };
-
   useEffect(() => {
-    return () => {
-      if (loadedVideo) {
-        loadedVideo.remove();
-      }
-    };
-  }, [loadedVideo]);
+    setIsMobile(/android|iphone|ipad/i.test(navigator.userAgent));
+  }, []);
 
-  const draw = (p5: any) => {
-    const strokeColor = p5.color(hex);
-    strokeColor.setAlpha(alpha);
-    p5.background(strokeColor);
+  /* preload */
+  const preload = (p5: any) => {
+    audios.slice(0, 4).forEach((src, i) => {
+      sounds.current[i] = p5.loadSound(src);
+      soundOn.current[i] = false;
+    });
 
+    images.forEach((src, i) => {
+      imgs.current[i] = p5.loadImage(src);
+    });
+
+    videos.forEach((src, i) => {
+      const v = p5.createVideo(src);
+      v.hide();
+      v.volume(0);
+      v.elt.muted = true;
+      v.loop();
+      vids.current[i] = v;
+    });
+  };
+
+  /* setup */
+  const setup = (p5: any, parent: Element) => {
+    const canvas = p5.createCanvas(
+      p5.windowWidth,
+      p5.windowHeight * 0.75,
+      p5.WEBGL
+    ).parent(parent);
+
+    canvasRef.current = canvas.elt;
+
+    // Touch event listeners para mobile
     if (isMobile) {
-      if (isTouching) {
-        if (!soundStates[0] && loadedSounds[0]) {
-          loadedSounds[0].loop();
-          const newStates = [...soundStates];
-          newStates[0] = true;
-          setSoundStates(newStates);
+      canvas.elt.addEventListener('touchstart', handleTouchStart, { passive: false });
+      canvas.elt.addEventListener('touchmove', handleTouchMove, { passive: false });
+      canvas.elt.addEventListener('touchend', handleTouchEnd, { passive: false });
+      canvas.elt.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+    }
+  };
+
+  /* helpers */
+  const looped = <T,>(arr: T[], i: number) =>
+    arr.length ? arr[i % arr.length] : null;
+
+  const toggle = (i: number, on: boolean) => {
+    const s = sounds.current[i];
+    if (!s) return;
+
+    if (on && !soundOn.current[i]) {
+      s.loop();
+      const vid = looped(vids.current, i);
+      if (vid && vid.elt.paused) {
+        vid.loop();
+      }
+      soundOn.current[i] = true;
+    }
+
+    if (!on && soundOn.current[i]) {
+      s.stop();
+      soundOn.current[i] = false;
+    }
+  };
+
+  const isInsideCanvas = (touch: Touch, canvas: HTMLCanvasElement) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = touch.clientX;
+    const y = touch.clientY;
+    
+    return (
+      x >= rect.left &&
+      x <= rect.right &&
+      y >= rect.top &&
+      y <= rect.bottom
+    );
+  };
+
+  const getQuadrantFromTouch = (touch: Touch, canvas: HTMLCanvasElement) => {
+    if (!isInsideCanvas(touch, canvas)) return -1;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = touch.clientX - rect.left - rect.width / 2;
+    const y = touch.clientY - rect.top - rect.height / 2;
+
+    if (x < 0 && y < 0) return 0; // top-left
+    if (x >= 0 && y < 0) return 1; // top-right
+    if (x < 0 && y >= 0) return 2; // bottom-left
+    if (x >= 0 && y >= 0) return 3; // bottom-right
+    return -1;
+  };
+
+  const handleTouchStart = (e: TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const canvas = e.target as HTMLCanvasElement;
+
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const touch = e.changedTouches[i];
+      
+      // Solo procesar si el touch está dentro del canvas
+      if (!isInsideCanvas(touch, canvas)) continue;
+      
+      const quadrant = getQuadrantFromTouch(touch, canvas);
+      
+      if (quadrant !== -1) {
+        activeTouches.current.set(touch.identifier, quadrant);
+        toggle(quadrant, true);
+      }
+    }
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const canvas = e.target as HTMLCanvasElement;
+
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const touch = e.changedTouches[i];
+      const oldQuadrant = activeTouches.current.get(touch.identifier);
+      
+      // Si el touch sale del canvas, apagar el audio
+      if (!isInsideCanvas(touch, canvas)) {
+        if (oldQuadrant !== undefined) {
+          toggle(oldQuadrant, false);
+          activeTouches.current.delete(touch.identifier);
         }
-      } else {
-        if (soundStates[0] && loadedSounds[0]) {
-          loadedSounds[0].stop();
-          const newStates = [...soundStates];
-          newStates[0] = false;
-          setSoundStates(newStates);
+        continue;
+      }
+
+      const newQuadrant = getQuadrantFromTouch(touch, canvas);
+
+      if (oldQuadrant !== undefined && oldQuadrant !== newQuadrant) {
+        // Salió del cuadrante, apagar el audio
+        toggle(oldQuadrant, false);
+        activeTouches.current.delete(touch.identifier);
+
+        // Si entró a un nuevo cuadrante válido, encender ese audio
+        if (newQuadrant !== -1) {
+          activeTouches.current.set(touch.identifier, newQuadrant);
+          toggle(newQuadrant, true);
         }
       }
     }
+  };
 
-    if (soundStates[0] && loadedSounds[0]?.isPlaying()) {
-      if (!isVideoPlaying && loadedVideo) {
-        loadedVideo.volume(0);
-        loadedVideo.elt.muted = true;
-        loadedVideo.loop();
-        setIsVideoPlaying(true);
+  const handleTouchEnd = (e: TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const touch = e.changedTouches[i];
+      const quadrant = activeTouches.current.get(touch.identifier);
+
+      if (quadrant !== undefined) {
+        toggle(quadrant, false);
+        activeTouches.current.delete(touch.identifier);
       }
-    } else if (isVideoPlaying && loadedVideo) {
-      loadedVideo.pause();
-      setIsVideoPlaying(false);
+    }
+  };
+
+  /* draw */
+  const draw = (p5: any) => {
+    const bg = p5.color(palette.lighter_bg);
+    bg.setAlpha(120);
+    p5.background(bg);
+
+    /* desktop keys - mantener presionado */
+    if (!isMobile) {
+      KEYS.forEach((k, i) => {
+        toggle(i, p5.keyIsDown(k));
+      });
     }
 
-    if (isVideoPlaying && loadedVideo) {
-      const aspectRatio = loadedVideo.width / loadedVideo.height || 16 / 9;
-      const videoWidth = p5.width;
-      const videoHeight = p5.width / aspectRatio;
-      const offsetY = -videoHeight / 2;
+    /* draw layers */
+    for (let i = 0; i < 4; i++) {
+      const hasSound = soundOn.current[i];
+      
+      // Posición según cuadrante
+      const x = (i % 2 === 0 ? -1 : 1) * (p5.width / 4);
+      const y = (i < 2 ? -1 : 1) * (p5.height / 4);
 
       p5.push();
-      p5.translate(-p5.width / 2, offsetY);
-      p5.image(loadedVideo, 0, 0, videoWidth, videoHeight);
+      p5.translate(x, y);
+
+      // Dibujar video de fondo si existe
+      const vid = looped(vids.current, i);
+      if (vid && hasSound) {
+        const scale = Math.max(
+          p5.width / vid.width,
+          p5.height / vid.height
+        ) * 0.6;
+
+        p5.tint(255, 255);
+        p5.image(
+          vid,
+          (-vid.width * scale) / 2,
+          (-vid.height * scale) / 2,
+          vid.width * scale,
+          vid.height * scale
+        );
+      }
+
+      // Dibujar imagen con transparencia encima
+      if (hasSound) {
+        const img = looped(imgs.current, i);
+        if (img) {
+          alphaPhase.current[i] += 0.02;
+          const alpha = 80 + p5.sin(alphaPhase.current[i]) * 80;
+
+          p5.tint(255, alpha);
+
+          const scale = Math.max(
+            p5.width / img.width,
+            p5.height / img.height
+          ) * 0.6;
+
+          p5.image(
+            img,
+            (-img.width * scale) / 2,
+            (-img.height * scale) / 2,
+            img.width * scale,
+            img.height * scale
+          );
+        }
+      }
+
       p5.pop();
     }
 
-    for (let i = 0; i < audioCount; i++) {
-      if (!isMobile) {
-        const key = keys[i];
-        if (p5.keyIsDown(key) && !soundStates[i] && loadedSounds[i]) {
-          loadedSounds[i].loop();
-          const newStates = [...soundStates];
-          newStates[i] = true;
-          setSoundStates(newStates);
-        } else if (!p5.keyIsDown(key) && soundStates[i] && loadedSounds[i]) {
-          loadedSounds[i].stop();
-          const newStates = [...soundStates];
-          newStates[i] = false;
-          setSoundStates(newStates);
-        }
-      }
-
-      if (soundStates[i] && loadedSounds[i]?.isPlaying()) {
-        if (i === 0 && loadedImage) {
-          p5.push();
-          const alpha = p5.map(p5.sin(imageAngle), -1, 1, 100, 255);
-          setImageAngle((prev) => prev + 0.02);
-          p5.tint(255, alpha);
-
-          const imgW = loadedImage.width;
-          const imgH = loadedImage.height;
-          const canvasW = p5.width;
-          const canvasH = p5.height;
-          const scale = Math.max(canvasW / imgW, canvasH / imgH);
-          const drawW = imgW * scale;
-          const drawH = imgH * scale;
-
-          p5.image(loadedImage, -drawW / 2, -drawH / 2, drawW, drawH);
-
-          p5.noTint();
-          p5.pop();
-        }
-      }
+    /* cruz divisoria en mobile */
+    if (isMobile) {
+      p5.push();
+      p5.stroke(palette.text_secondary);
+      p5.strokeWeight(2);
+      
+      // Línea vertical
+      p5.line(0, -p5.height / 2, 0, p5.height / 2);
+      
+      // Línea horizontal
+      p5.line(-p5.width / 2, 0, p5.width / 2, 0);
+      
+      p5.pop();
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-500">Error: {error.message}</div>
-      </div>
-    );
+  if (!Sketch || !p5SoundLoaded) {
+    return <div>Loading audio library...</div>;
   }
 
   return (
-    <div className="w-full h-screen flex flex-col items-center justify-center">
-      <span className="mb-4 text-center">
-        {audioCount > 0
-          ? isMobile
-            ? "Touch the screen"
-            : `Press the keys: ${audioCount >= 1 ? "K" : ""}${
-                audioCount >= 2 ? ", B" : ""
-              }${audioCount >= 3 ? ", S" : ""}${audioCount >= 4 ? ", H" : ""}${
-                audioCount >= 5 ? ", N" : ""
-              }${audioCount >= 6 ? ", M" : ""}.`
-          : "No audios available."}
-      </span>
-      <Sketch
-        preload={preload}
-        setup={setup}
-        draw={draw}
-        windowResized={windowResized}
-      />
+    <div
+      style={{
+        userSelect: "none",
+        WebkitUserSelect: "none",
+        MozUserSelect: "none",
+        msUserSelect: "none",
+        WebkitTouchCallout: "none",
+        WebkitTapHighlightColor: "transparent",
+        touchAction: "none",
+        overflow: "hidden",
+        position: "relative",
+      }}
+    >
+      <style jsx global>{`
+        canvas {
+          user-select: none !important;
+          -webkit-user-select: none !important;
+          -moz-user-select: none !important;
+          -ms-user-select: none !important;
+          -webkit-touch-callout: none !important;
+          -webkit-tap-highlight-color: transparent !important;
+          touch-action: none !important;
+          display: block;
+          outline: none;
+        }
+      `}</style>
+      <Sketch preload={preload} setup={setup} draw={draw} />
     </div>
   );
 };

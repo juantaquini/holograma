@@ -101,7 +101,7 @@
   color: var(--text-color);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   z-index: 1200;
   animation: fadeInMenu 0.2s;
@@ -128,24 +128,23 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
+  justify-content: center;
+  gap: 32px;
   width: 100%;
   max-width: 400px;
-  flex: 1;
   text-transform: uppercase;
+  padding: 2rem 0;
 }
 
 .navbar-mobile-menu a,
 .navbar-mobile-menu button {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   color: inherit;
   background: none;
   border: none;
   text-decoration: none;
   padding: 0.75rem 2rem;
-  transition:
-    background 0.15s,
-    color 0.15s;
+  transition: background 0.15s, color 0.15s;
   cursor: pointer;
   font-family: "IBM Plex Sans";
   font-weight: 500;

@@ -3,7 +3,9 @@
   flex-direction: column;
   gap: 16px;
   padding: 28px;
-  border-radius: 50%;
+  border-radius: 8px;
+  width: 100%;
+  flex: 1;
   border: 1.5px dashed var(--text-color);
 }
 
@@ -20,7 +22,7 @@
 .time {
   font-size: 1rem;
   color: var(--text-color);
-  flex: 1;
+  margin-left: auto;
 }
 
 .controls {
