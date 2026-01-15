@@ -7,7 +7,7 @@ import styles from "./InteractiveList.module.css";
 import calm from "@/assets/interactives/calm.jpeg";
 import calm2 from "@/assets/interactives/calm2.jpeg";
 import chaotic from "@/assets/interactives/chaotic.jpeg";
-import chaotic2 from "@/assets/interactives/chaotic2.png";
+import chaotic2 from "@/assets/interactives/chaotic2.jpeg";
 import design from "@/assets/interactives/design.jpeg";
 import design2 from "@/assets/interactives/design2.jpeg";
 import dynamic from "@/assets/interactives/dynamic.jpeg";
